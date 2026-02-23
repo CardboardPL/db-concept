@@ -35,7 +35,6 @@ class Database {
                     if (typeof upgradeHandler === 'function') {
                         upgradeHandler(event);
                     }
-                    resolve(event.target.result);
                 };
     
                 DBOpenRequest.onerror = (event) => {
