@@ -27,14 +27,14 @@ class Database {
 
         try {
             this.#db = await new Promise((resolve, reject) => {
-                DBOpenRequest.onsuccess = (event) => {
-                    resolve(event.target.result);
-                };
-    
                 DBOpenRequest.onupgradeneeded = (event) => {
                     if (typeof upgradeHandler === 'function') {
                         upgradeHandler(event);
                     }
+                };
+
+                DBOpenRequest.onsuccess = (event) => {
+                    resolve(event.target.result);
                 };
     
                 DBOpenRequest.onerror = (event) => {
@@ -45,8 +45,7 @@ class Database {
                 }
             });
         } catch (err) {
-            this.close();
-            throw new Error('Failed to open database:', err);
+            throw new Error(`Failed to open database: ${err}`);
         }
 
         this.#isOpen = true;
