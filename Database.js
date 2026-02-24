@@ -14,17 +14,8 @@ class Database {
 
     async open(errorHandler, upgradeHandler) {
         if (this.#isOpen) throw new Error('Tried opening an already opened database');
-
-        await indexedDB.databases().then((databases) => {
-            for (const database of databases) {
-                if (database.name === this.#name) {
-                    if (database.version > this.#version) throw new Error(`Failed to open database: version number (${this.#version}) is less than the saved version number (${database.version})`);
-                }
-            }
-        });
-
+        
         const DBOpenRequest = indexedDB.open(this.#name, this.#version);
-
         try {
             this.#db = await new Promise((resolve, reject) => {
                 DBOpenRequest.onupgradeneeded = (event) => {
