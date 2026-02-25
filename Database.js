@@ -6,12 +6,9 @@ class Database {
     #name;
     #version;
 
-    constructor(name, version) {
+    constructor(name) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
-        if (typeof version !== 'number' && version != null) throw new Error(`Failed to initialize DB: expected version to be of type number but received ${typeof version}`);
-        if (version <= 0) throw new Error('Failed to initialize DB: version number must be a positive integer');
         this.#name = name;
-        this.#version = version;
     }
 
     async open(handlers) {
@@ -27,8 +24,10 @@ class Database {
                     }
                 };
 
-                DBOpenRequest.onsuccess = (event) => {                    
-                    resolve(event.target.result);
+                DBOpenRequest.onsuccess = (event) => {        
+                    const db = event.target.result;   
+                    this.#version = db.version;         
+                    resolve(db);
                 };
 
                 DBOpenRequest.onblocked = (event) => {
@@ -39,18 +38,23 @@ class Database {
     
                 DBOpenRequest.onerror = (event) => {
                     const error = event.error;
-                    
-                    if (handlers && typeof handlers.onerror === 'function') {
+                    if (error.name !== 'VersionError' && handlers && typeof handlers.onerror === 'function') {
                         handlers.onerror(error);
                     }
                     reject(error);
                 }
             });
         } catch (err) {
-            throw new DatabaseError('Failed to open database', err);
+            if (err.name === 'VersionError') {
+                this.#version = undefined;
+                return this.open(handlers);
+            } else {
+                throw new DatabaseError('Failed to open database', err);
+            }
         }
 
         this.#db.onversionchange = (event) => {
+            this.#version = event.newVersion;
             if (handlers && typeof handlers.onversionchange === 'function') {
                 handlers.onversionchange(event);
             }
@@ -66,7 +70,3 @@ class Database {
         this.#db.close();
     }
 }
-
-const db = new Database('db-1', 1);
-db.open();
-console.log(db);
