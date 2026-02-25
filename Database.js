@@ -1,3 +1,5 @@
+import { DatabaseError } from "./DatabaseError.js";
+
 class Database {
     #db;
     #isOpen = false;
@@ -12,31 +14,47 @@ class Database {
         this.#version = version;
     }
 
-    async open(errorHandler, upgradeHandler) {
+    async open(handlers) {
+        if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#isOpen) throw new Error('Tried opening an already opened database');
         
         const DBOpenRequest = indexedDB.open(this.#name, this.#version);
         try {
             this.#db = await new Promise((resolve, reject) => {
                 DBOpenRequest.onupgradeneeded = (event) => {
-                    if (typeof upgradeHandler === 'function') {
-                        upgradeHandler(event);
+                    if (handlers && typeof handlers.onupgradeneeded === 'function') {
+                        handlers.onupgradeneeded(event);
                     }
                 };
 
-                DBOpenRequest.onsuccess = (event) => {
+                DBOpenRequest.onsuccess = (event) => {                    
                     resolve(event.target.result);
+                };
+
+                DBOpenRequest.onblocked = (event) => {
+                    if (handlers && typeof handlers.onblocked === 'function') {
+                        handlers.onblocked(event);
+                    }
                 };
     
                 DBOpenRequest.onerror = (event) => {
-                    if (typeof errorHandler === 'function') {
-                        errorHandler(event);
+                    const error = event.error;
+                    
+                    if (handlers && typeof handlers.onerror === 'function') {
+                        handlers.onerror(error);
                     }
-                    reject(event);
+                    reject(error);
                 }
             });
         } catch (err) {
-            throw new Error(`Failed to open database: ${err}`);
+            throw new DatabaseError('Failed to open database', err);
+        }
+
+        this.#db.onversionchange = (event) => {
+            if (handlers && typeof handlers.onversionchange === 'function') {
+                handlers.onversionchange(event);
+            }
+            this.close();
         }
 
         this.#isOpen = true;
@@ -51,3 +69,4 @@ class Database {
 
 const db = new Database('db-1', 1);
 db.open();
+console.log(db);
