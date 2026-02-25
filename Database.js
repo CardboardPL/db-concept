@@ -2,7 +2,9 @@ import { DatabaseError } from "./DatabaseError.js";
 
 class Database {
     #db;
-    #isOpen = false;
+    #state = 'closed';
+    #upgradeStatus = 'upgraded';
+    #versionChanged = false;
     #name;
     #version;
 
@@ -11,22 +13,38 @@ class Database {
         this.#name = name;
     }
 
+    #decideVersionToUse() {
+        let versionToUse;
+        if (this.#versionChanged) {
+            versionToUse = undefined;
+        } else if (this.#upgradeStatus === 'upgrading') {
+            versionToUse = this.#version + 1;
+        } else {
+            versionToUse = this.#version;
+        }
+        return versionToUse;
+    }
+
     async open(handlers) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
-        if (this.#isOpen) throw new Error('Tried opening an already opened database');
+        if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
+        if (this.#state === 'opened') throw new Error('Tried opening an already opened database');
+        this.#state = 'opening';
         
-        const DBOpenRequest = indexedDB.open(this.#name, this.#version);
+        const DBOpenRequest = indexedDB.open(this.#name, this.#decideVersionToUse());
         try {
             this.#db = await new Promise((resolve, reject) => {
                 DBOpenRequest.onupgradeneeded = (event) => {
+                    this.#upgradeStatus = 'upgraded';
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
                         handlers.onupgradeneeded(event);
                     }
                 };
 
-                DBOpenRequest.onsuccess = (event) => {        
-                    const db = event.target.result;   
-                    this.#version = db.version;         
+                DBOpenRequest.onsuccess = (event) => {
+                    const db = event.target.result;
+                    this.#versionChanged = false;
+                    this.#version = db.version;
                     resolve(db);
                 };
 
@@ -42,9 +60,10 @@ class Database {
                         handlers.onerror(error);
                     }
                     reject(error);
-                }
+                };
             });
         } catch (err) {
+            this.#state = 'closed';
             if (err.name === 'VersionError') {
                 this.#version = undefined;
                 return this.open(handlers);
@@ -54,19 +73,45 @@ class Database {
         }
 
         this.#db.onversionchange = (event) => {
-            this.#version = event.newVersion;
+            this.#versionChanged = true;
+            if (this.#upgradeStatus === 'upgrading') return;
             if (handlers && typeof handlers.onversionchange === 'function') {
-                handlers.onversionchange(event);
+                try {
+                    handlers.onversionchange(event);
+                } catch(err) {
+                    // Add future event bus publish method here and pass the error
+                }
             }
             this.close();
         }
 
-        this.#isOpen = true;
+        this.#state = 'opened';
+    }
+
+    async upgrade(handlers) {
+        if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
+        if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
+        this.#upgradeStatus = 'upgrading';
+        while (this.#upgradeStatus !== 'upgraded') {
+            this.close();
+            try {
+                await this.open(handlers);
+
+                if (this.#versionChanged) {
+                    this.close();
+                    await this.open(handlers);
+                }
+            } catch (err) {
+                if (this.#state !== 'closed') this.#db.close();
+                throw new DatabaseError('An error occured while upgrading the database', err);
+            }
+        }
     }
 
     close() {
-        if (!this.#isOpen) throw new Error('Tried closing an already closed database');
-        this.#isOpen = false;
+        if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
+        if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
+        this.#state = 'closed';
         this.#db.close();
     }
 }
