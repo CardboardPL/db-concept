@@ -91,6 +91,7 @@ class Database {
     async upgrade(handlers) {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
+        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
         this.#upgradeStatus = 'upgrading';
         while (this.#upgradeStatus !== 'upgraded') {
             this.close();
