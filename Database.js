@@ -1,6 +1,6 @@
 import { DatabaseError } from "./DatabaseError.js";
 
-class Database {
+export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
