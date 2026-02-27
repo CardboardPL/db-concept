@@ -11,30 +11,34 @@ export class DatabaseProxy {
     }
 
     async open(name, handlers) {
-        if (this.#state === 'opening') throw new Error('Rejected database proxy open atttempt: cannot run multiple open attempts simultaneously');
-        if (this.#state === 'opened') throw new Error('Rejected database proxy open atttempt: cannot open an already opened database');
+        if (this.#state !== 'closed') throw new Error(`Rejected database proxy open attempt: expected the state to be 'closed' but received '${this.#state}'`);
         if (!this.#allowedConnections.has(name)) throw new Error('Rejected database proxy open attempt: illegal connection name');
         this.#state = 'opening';
-        
         this.#db = new Database(name);
-        await this.#db.open(handlers);
-
+        try {
+            await this.#db.open(handlers);
+        } catch (err) {
+            this.#db = null;
+            this.#state = 'closed';
+            throw new Error(err.message);
+        }
         this.#state = 'opened';
     }
 
     async upgrade(handlers) {
-        if (this.#state === 'closed') throw new Error('Rejected database proxy upgrade atttempt: cannot perform an upgrade on a closed database');
-        if (this.#state === 'opening') throw new Error('Rejected database proxy upgrade atttempt: cannot perform an upgrade while the database is opening');
-        if (this.#state === 'upgrading') throw new Error('Rejected database proxy upgrade attempt: cannot run multiple upgrade attempts simultaneously');
+        if (this.#state !== 'opened') throw new Error(`Rejected database proxy upgrade atttempt: expected the state to be 'open' but received '${this.#state}'`);
         this.#state = 'upgrading';
-        await this.#db.upgrade(handlers);
+        try {
+            await this.#db.upgrade(handlers);
+        } catch (err) {
+            this.#state = 'opened';
+            throw new Error(err.message);
+        }
         this.#state = 'opened';
     }
 
     close() {
-        if (this.#state === 'closed') throw new Error('Rejected database proxy close atttempt: cannot close an already closed database');
-        if (this.#state === 'opening') throw new Error('Rejected database proxy upgrade atttempt: cannot close an opening database');
-        if (this.#state === 'upgrading') throw new Error('Rejected database proxy upgrade attempt: cannot close a database while it\'s upgrading');
+        if (this.#state !== 'opened') throw new Error(`Rejected database proxy close attempt: expected the state to be 'opened' but received '${this.#state}'`);
         this.#db.close();
         this.#db = null;
         this.#state = 'closed';
