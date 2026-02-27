@@ -10,6 +10,11 @@ export class DatabaseProxy {
         this.#allowedConnections = new Set(allowedConnections);
     }
 
+    #resetState() {
+        this.#db = null;
+        this.#state = 'closed';
+    }
+
     async open(name, handlers) {
         if (this.#state !== 'closed') throw new Error(`Rejected database proxy open attempt: expected the state to be 'closed' but received '${this.#state}'`);
         if (!this.#allowedConnections.has(name)) throw new Error('Rejected database proxy open attempt: illegal connection name');
@@ -18,8 +23,7 @@ export class DatabaseProxy {
         try {
             await this.#db.open(handlers);
         } catch (err) {
-            this.#db = null;
-            this.#state = 'closed';
+            this.#resetState();
             throw new Error(err.message);
         }
         this.#state = 'opened';
@@ -31,7 +35,7 @@ export class DatabaseProxy {
         try {
             await this.#db.upgrade(handlers);
         } catch (err) {
-            this.#state = 'opened';
+            this.#resetState();
             throw new Error(err.message);
         }
         this.#state = 'opened';
@@ -40,7 +44,6 @@ export class DatabaseProxy {
     close() {
         if (this.#state !== 'opened') throw new Error(`Rejected database proxy close attempt: expected the state to be 'opened' but received '${this.#state}'`);
         this.#db.close();
-        this.#db = null;
-        this.#state = 'closed';
+        this.#resetState();
     }
 }
