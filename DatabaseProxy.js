@@ -16,8 +16,8 @@ export class DatabaseProxy {
         if (!this.#allowedConnections.has(name)) throw new Error('Rejected database proxy open attempt: illegal connection name');
         this.#state = 'opening';
         
-        const db = new Database(name);
-        this.#db = await db.open(handlers);
+        this.#db = new Database(name);
+        await this.#db.open(handlers);
 
         this.#state = 'opened';
     }
