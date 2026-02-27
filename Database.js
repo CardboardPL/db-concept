@@ -104,6 +104,7 @@ export class Database {
                 }
             } catch (err) {
                 if (this.#state !== 'closed') this.#db.close();
+                this.#upgradeStatus = 'upgraded';
                 throw new DatabaseError('An error occured while upgrading the database', err);
             }
         }
