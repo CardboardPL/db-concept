@@ -94,8 +94,8 @@ export class Database {
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
         this.#upgradeStatus = 'upgrading';
         while (this.#upgradeStatus !== 'upgraded') {
-            this.close();
             try {
+                this.close();
                 await this.open(handlers);
 
                 if (this.#versionChanged) {
