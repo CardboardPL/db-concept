@@ -24,7 +24,7 @@ export class DatabaseProxy {
             await this.#db.open(handlers);
         } catch (err) {
             this.#resetState();
-            throw new Error(err.message);
+            throw err;
         }
         this.#state = 'opened';
     }
@@ -36,7 +36,7 @@ export class DatabaseProxy {
             await this.#db.upgrade(handlers);
         } catch (err) {
             this.#resetState();
-            throw new Error(err.message);
+            throw err;
         }
         this.#state = 'opened';
     }
