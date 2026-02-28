@@ -103,15 +103,14 @@ export class Database {
         if (this.#transaction.active === true) throw new Error('A transaction is in progress');
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
 
-        await new Promise((resolve, reject) => {
-            try {
+        try {
+            await new Promise((resolve, reject) => {
                 const transactionHandler = handlers.transactionHandler;
                 if (typeof transactionHandler !== 'function') throw new Error(`Expected transactionHandler to be a function but received ${typeof transactionHandler}`);
 
                 const transaction = this.#db.transaction(storeNames, mode, options);
                 this.#transaction.active = true;
                 this.#transaction.instance = transaction;
-                transactionHandler(transaction);
                 const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
 
                 transaction.onabort = (event) => {
@@ -123,10 +122,11 @@ export class Database {
                 }
 
                 transaction.onerror = (event) => {
+                    const error = event.error;
                     if (typeof onErrorHandler === 'function') {
-                        onErrorHandler(event);
+                        onErrorHandler(error);
                     }
-                    reject(event);
+                    reject(error);
                 }
 
                 transaction.oncomplete = (event) => {
@@ -137,11 +137,12 @@ export class Database {
                     resolve();
                 }
 
-            } catch(err) {
-                this.#resetTransactionState();
-                throw new DatabaseError('An error occured while performing a transaction', err);
-            }
-        });
+                transactionHandler(transaction);
+            });
+        } catch(err) {
+            this.#resetTransactionState();
+            throw new DatabaseError('An error occured while performing a transaction', err);
+        }
     }
 
     abortCurrentTransaction() {
