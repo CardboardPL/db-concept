@@ -4,6 +4,10 @@ export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
+    #transaction = {
+        active: false,
+        instance: null
+    };
     #versionChanged = false;
     #name;
     #version;
@@ -11,6 +15,11 @@ export class Database {
     constructor(name) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         this.#name = name;
+    }
+
+    #resetTransactionState() {
+        this.#transaction.active = false;
+        this.#transaction.instance = null;
     }
 
     #decideVersionToUse() {
@@ -88,13 +97,49 @@ export class Database {
         this.#state = 'opened';
     }
 
-    async transaction(handlers) {
+    async transaction(storeNames, mode, handlers) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
+        if (this.#transaction.active === true) throw new Error('A transaction is in progress');
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
 
         await new Promise((resolve, reject) => {
+            try {
+                const transactionHandler = handlers.transactionHandler;
+                if (typeof transactionHandler !== 'function') throw new Error(`Expected transactionHandler to be a function but received ${typeof transactionHandler}`);
 
+                const transaction = this.#db.transaction(storeNames, mode);
+                this.#transaction.active = true;
+                this.#transaction.instance = transaction;
+                const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
+
+                transaction.onabort = (event) => {
+                    if (typeof onAbortHandler === 'function') {
+                        onAbortHandler(event);
+                    }
+                    this.#resetTransactionState();
+                    resolve();
+                }
+
+                transaction.onerror = (event) => {
+                    if (typeof onErrorHandler === 'function') {
+                        onErrorHandler(event);
+                    }
+                    reject(event);
+                }
+
+                transaction.oncomplete = (event) => {
+                    if (typeof onCompleteHandler === 'function') {
+                        onCompleteHandler(event);
+                    }
+                    this.#resetTransactionState();
+                    resolve();
+                }
+
+            } catch(err) {
+                this.#resetTransactionState();
+                throw new DatabaseError('An error occured while performing a transaction', err);
+            }
         });
     }
 
