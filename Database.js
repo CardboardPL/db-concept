@@ -143,6 +143,11 @@ export class Database {
         });
     }
 
+    abortCurrentTransaction() {
+        if (this.#transaction.active !== true) throw new Error('There is no ongoing transaction');
+        this.#transaction.instance.abort();
+    }
+
     async upgrade(handlers) {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
