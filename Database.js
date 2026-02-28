@@ -97,7 +97,7 @@ export class Database {
         this.#state = 'opened';
     }
 
-    async transaction(storeNames, mode, handlers) {
+    async transaction(storeNames, mode, options, handlers) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
         if (this.#transaction.active === true) throw new Error('A transaction is in progress');
@@ -108,9 +108,10 @@ export class Database {
                 const transactionHandler = handlers.transactionHandler;
                 if (typeof transactionHandler !== 'function') throw new Error(`Expected transactionHandler to be a function but received ${typeof transactionHandler}`);
 
-                const transaction = this.#db.transaction(storeNames, mode);
+                const transaction = this.#db.transaction(storeNames, mode, options);
                 this.#transaction.active = true;
                 this.#transaction.instance = transaction;
+                transactionHandler(transaction);
                 const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
 
                 transaction.onabort = (event) => {
