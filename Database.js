@@ -153,6 +153,7 @@ export class Database {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
+        if (this.#transaction.active === true) throw new Error('Cannot upgrade the database while a transaction is ongoing');
         this.#upgradeStatus = 'upgrading';
         while (this.#upgradeStatus !== 'upgraded') {
             try {
@@ -174,6 +175,7 @@ export class Database {
     close() {
         if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
+        if (this.#transaction.active === true) throw new Error('Cannot close the database while a transaction is ongoing');
         this.#state = 'closed';
         this.#db.close();
     }
