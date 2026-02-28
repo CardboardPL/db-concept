@@ -88,6 +88,16 @@ export class Database {
         this.#state = 'opened';
     }
 
+    async transaction(handlers) {
+        if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
+        if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
+        if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
+
+        await new Promise((resolve, reject) => {
+
+        });
+    }
+
     async upgrade(handlers) {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
