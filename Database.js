@@ -26,7 +26,7 @@ export class Database {
         let versionToUse;
         if (this.#versionChanged) {
             versionToUse = undefined;
-        } else if (this.#upgradeStatus === 'upgrading') {
+        } else if (this.#version && this.#upgradeStatus === 'upgrading') {
             versionToUse = this.#version + 1;
         } else {
             versionToUse = this.#version;
