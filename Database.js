@@ -151,14 +151,20 @@ export class Database {
         this.#transaction.instance.abort();
     }
 
-    async upgrade(handlers) {
+    async upgrade(handlers, attemptCap) {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
         if (this.#transaction.active === true) throw new Error('Cannot upgrade the database while a transaction is ongoing');
+        if (Number.isNaN(attemptCap)) {
+            attemptCap = null;
+        }
+
         this.#upgradeStatus = 'upgrading';
+        let attempts = 0;
         while (this.#upgradeStatus !== 'upgraded') {
             try {
+                if (typeof attemptCap === 'number' && attemptCap < attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
                 this.close();
                 await this.open(handlers);
 
@@ -166,6 +172,7 @@ export class Database {
                     this.close();
                     await this.open(handlers);
                 }
+                attempts++;
             } catch (err) {
                 if (this.#state !== 'closed') this.close();
                 this.#upgradeStatus = 'upgraded';
