@@ -8,6 +8,7 @@ export class Database {
         active: false,
         instance: null
     };
+    #deleting = false;
     #versionChanged = false;
     #name;
     #version;
@@ -171,6 +172,38 @@ export class Database {
                 throw new DatabaseError('An error occured while upgrading the database', err);
             }
         }
+    }
+
+    async delete(handlers, options) {
+        if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
+        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
+        if (this.#transaction.active === true) throw new Error('Cannot delete the database while a transaction is ongoing');
+        if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
+        this.#deleting = true
+        if (this.#state !== 'closed') this.close();
+        const DBDeleteRequest = indexedDB.deleteDatabase(this.#name, options);
+        try {
+            await new Promise((resolve, reject) => {
+                DBDeleteRequest.onerror = (event) => {
+                    const error = event.error;
+                    if (typeof handlers.onerror === 'function') {
+                        handlers.onerror(error);
+                    }
+                    reject(error);
+                }
+
+                DBDeleteRequest.onsuccess = (event) => {
+                    if (typeof handlers.onsuccess === 'function') {
+                        handlers.onsuccess(event);
+                    }
+                    resolve();
+                }
+            });
+        } catch (err) {
+            this.#deleting = false;
+            throw new DatabaseError('An error occured while deleting the database', err);
+        }
+        this.#deleting = false;
     }
 
     close() {
