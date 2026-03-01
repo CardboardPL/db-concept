@@ -164,7 +164,7 @@ export class Database {
         let attempts = 0;
         while (this.#upgradeStatus !== 'upgraded') {
             try {
-                if (typeof attemptCap === 'number' && attemptCap < attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
+                if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
                 this.close();
                 await this.open(handlers);
                 attempts++;
