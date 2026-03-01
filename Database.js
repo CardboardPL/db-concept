@@ -167,11 +167,6 @@ export class Database {
                 if (typeof attemptCap === 'number' && attemptCap < attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
                 this.close();
                 await this.open(handlers);
-
-                if (this.#versionChanged) {
-                    this.close();
-                    await this.open(handlers);
-                }
                 attempts++;
             } catch (err) {
                 if (this.#state !== 'closed') this.close();
