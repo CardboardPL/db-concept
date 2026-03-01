@@ -167,7 +167,7 @@ export class Database {
                     await this.open(handlers);
                 }
             } catch (err) {
-                if (this.#state !== 'closed') this.#db.close();
+                if (this.#state !== 'closed') this.close();
                 this.#upgradeStatus = 'upgraded';
                 throw new DatabaseError('An error occured while upgrading the database', err);
             }
