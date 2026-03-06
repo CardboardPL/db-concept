@@ -18,15 +18,19 @@ function checkStatus(worker, message) {
     });
 }
 
+function generateStatusBroadcastMessage(workerName, state) {
+    return {
+        message: `${workerName}: ${state}`,
+        timestamp: Date.now()
+    }
+}
+
 async function requestWorkers(channelName, lockName, workerName, workerFilePath) {
     const broadcastChannel = new BroadcastChannel(channelName);
     try {
         workerStatus[workerName] = 'requested';
         return navigator.locks.request(lockName, async () => {
-            broadcastChannel.postMessage({
-                message: `Initializing ${workerName}`,
-                timestamp: Date.now()
-            });
+            broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Initializing'));
             workerStatus[workerName] = 'initializing';
             const hubWorker = new Worker(workerFilePath);
             hubWorker.onerror = (event) => {
@@ -35,10 +39,7 @@ async function requestWorkers(channelName, lockName, workerName, workerFilePath)
         
             await checkStatus(hubWorker, `${workerName} Status Check`);
             workerStatus[workerName] = 'online';
-            broadcastChannel.postMessage({
-                message: `${workerName} Online`,
-                timestamp: Date.now()
-            });
+            broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
             hubWorker.onerror = null;
             await new Promise((resolve, reject) => {
@@ -56,10 +57,7 @@ async function requestWorkers(channelName, lockName, workerName, workerFilePath)
         });
     } catch(err) {
         workerStatus[workerName] = 'dropped';
-        broadcastChannel.postMessage({
-            message: `${workerName} Offline`,
-            timestamp: Date.now()
-        });
+        broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Offline'));
         throw err;
     }
 }
