@@ -61,3 +61,20 @@ async function requestWorkers(channelName, lockName, workerName, workerFilePath)
         throw err;
     }
 }
+
+async function manageWorker(channelName, lockName, workerName, workerFilePath) {
+    while (true) {
+        try {
+            await requestWorkers(channelName, lockName, workerName, workerFilePath);
+        } catch(err) {
+            console.warn(err);
+            await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
+        }
+    }
+}
+
+manageWorker('w1', 'w1', 'Hub Worker', './workers/hub.worker.js');
