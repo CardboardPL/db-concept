@@ -59,7 +59,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
 async function manageWorker(channelName, lockName, workerName, workerFilePath) {
     while (true) {
         try {
-            await requestWorkers(channelName, lockName, workerName, workerFilePath);
+            await requestWorker(channelName, lockName, workerName, workerFilePath);
         } catch(err) {
             console.warn(err);
             await new Promise((resolve, reject) => {
