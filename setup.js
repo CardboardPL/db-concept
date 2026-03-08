@@ -1,5 +1,3 @@
-const workerStatus = {};
-
 // Verifies Worker Status
 function checkStatus(worker, message) {
     const { port1, port2 } = new MessageChannel();
@@ -28,17 +26,14 @@ function generateStatusBroadcastMessage(workerName, state) {
 async function requestWorkers(channelName, lockName, workerName, workerFilePath) {
     const broadcastChannel = new BroadcastChannel(channelName);
     try {
-        workerStatus[workerName] = 'requested';
         return navigator.locks.request(lockName, async () => {
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Initializing'));
-            workerStatus[workerName] = 'initializing';
             const hubWorker = new Worker(workerFilePath);
             hubWorker.onerror = (event) => {
                 throw event.error;
             };
         
             await checkStatus(hubWorker, `${workerName} Status Check`);
-            workerStatus[workerName] = 'online';
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
             hubWorker.onerror = null;
@@ -56,7 +51,6 @@ async function requestWorkers(channelName, lockName, workerName, workerFilePath)
             });
         });
     } catch(err) {
-        workerStatus[workerName] = 'dropped';
         broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Offline'));
         throw err;
     }
