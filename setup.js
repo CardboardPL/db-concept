@@ -23,26 +23,26 @@ function generateStatusBroadcastMessage(workerName, state) {
     }
 }
 
-async function requestWorkers(channelName, lockName, workerName, workerFilePath) {
+async function requestWorker(channelName, lockName, workerName, workerFilePath) {
     const broadcastChannel = new BroadcastChannel(channelName);
     try {
         return navigator.locks.request(lockName, async () => {
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Initializing'));
-            const hubWorker = new Worker(workerFilePath);
-            hubWorker.onerror = (event) => {
+            const worker = new Worker(workerFilePath);
+            worker.onerror = (event) => {
                 throw event.error;
             };
         
-            await checkStatus(hubWorker, `${workerName} Status Check`);
+            await checkStatus(worker, `${workerName} Status Check`);
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
-            hubWorker.onerror = null;
+            worker.onerror = null;
             await new Promise((resolve, reject) => {
-                hubWorker.onerror = (event) => reject(event.error);
+                worker.onerror = (event) => reject(event.error);
 
                 const heartbeat = setInterval(async () => {
                     try {
-                        await checkStatus(hubWorker, `${workerName} Status Check`);
+                        await checkStatus(worker, `${workerName} Status Check`);
                     } catch (e) {
                         clearInterval(heartbeat);
                         reject(new Error(`${workerName} Stopped Responding`));
