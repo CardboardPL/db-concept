@@ -30,6 +30,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Initializing'));
             const worker = new Worker(workerFilePath);
             worker.onerror = (event) => {
+                worker.terminate();
                 throw event.error;
             };
         
@@ -38,12 +39,16 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
 
             worker.onerror = null;
             await new Promise((resolve, reject) => {
-                worker.onerror = (event) => reject(event.error);
+                worker.onerror = (event) => {
+                    worker.terminate();
+                    reject(event.error)
+                };
 
                 const heartbeat = setInterval(async () => {
                     try {
                         await checkStatus(worker, `${workerName} Status Check`);
                     } catch (e) {
+                        worker.terminate();
                         clearInterval(heartbeat);
                         reject(new Error(`${workerName} Stopped Responding`));
                     }
