@@ -1,8 +1,10 @@
+import { Database } from "./Database.js";
+
 export class DatabaseRegistry {
     #map;
 
     constructor() {
-
+        this.#map = new Map();
     }
 
     registerConnection(id) {
