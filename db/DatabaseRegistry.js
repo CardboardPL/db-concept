@@ -7,14 +7,6 @@ export class DatabaseRegistry {
         this.#map = new Map();
     }
 
-    registerConnection(id) {
-
-    }
-
-    deregisterConnection(id) {
-
-    }
-
     async requestTransaction(name, id, transactionHandler) {
 
     }
