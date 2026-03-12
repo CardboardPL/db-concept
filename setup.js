@@ -77,3 +77,4 @@ async function manageWorker(channelName, lockName, workerName, workerFilePath) {
 }
 
 manageWorker('w1', 'w1', 'Hub Worker', './workers/hub.worker.js');
+manageWorker('w2', 'w2', 'Database Worker', './workers/db.worker.js');
