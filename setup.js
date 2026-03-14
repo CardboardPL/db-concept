@@ -5,7 +5,12 @@ function checkStatus(worker, message) {
         port1.start();
         worker.postMessage(message, [port2]);
         
+        const timeoutId = setTimeout(() => {
+            reject('Failed to respond within the 15 second period');
+        }, 15000);
+
         port1.onmessage = (event) => {
+            clearTimeout(timeoutId);
             if (event.data === 'Active') {
                 resolve();
             } else {
@@ -44,15 +49,18 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
                     reject(event.error)
                 };
 
-                const heartbeat = setInterval(async () => {
+                const heartbeatHandler = async () => {
+                    clearTimeout(heartbeatId);
                     try {
                         await checkStatus(worker, `${workerName} Status Check`);
+                        heartbeatId = setTimeout(heartbeatHandler, 40000)
                     } catch (e) {
                         worker.terminate();
-                        clearInterval(heartbeat);
                         reject(new Error(`${workerName} Stopped Responding`));
                     }
-                }, 40000);
+                }
+
+                let heartbeatId = setTimeout(heartbeatHandler, 40000);
             });
         });
     } catch(err) {
