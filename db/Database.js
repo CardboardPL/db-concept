@@ -89,7 +89,10 @@ export class Database {
                 try {
                     handlers.onversionchange(event);
                 } catch(err) {
-                    // Add future event bus publish method here and pass the error
+                    console.error(err);
+                    if (typeof handlers.onversionchangeerror === 'function') {
+                        handlers.onversionchangeerror(err);
+                    }
                 }
             }
             this.close();
