@@ -49,7 +49,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
                     reject(event.error)
                 };
 
-                const heartbeatHandler = async () => {
+                async function heartbeatHandler() {
                     clearTimeout(heartbeatId);
                     try {
                         await checkStatus(worker, `${workerName} Status Check`);
