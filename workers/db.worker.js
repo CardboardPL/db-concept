@@ -1,3 +1,5 @@
+const dbChannel = new BroadcastChannel('db-channel');
+
 self.addEventListener('message', (e) => {
     const port = e.ports[0];
     
