@@ -62,7 +62,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
 
                 let heartbeatId = setTimeout(heartbeatHandler, 40000);
 
-                if (typeof lifecycleHandler === 'function') lifecycleHandler();
+                if (typeof lifecycleHandler === 'function') lifecycleHandler(worker);
             });
         });
     } catch(err) {
