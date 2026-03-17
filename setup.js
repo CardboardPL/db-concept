@@ -28,7 +28,7 @@ function generateStatusBroadcastMessage(workerName, state) {
     }
 }
 
-async function requestWorker(channelName, lockName, workerName, workerFilePath) {
+async function requestWorker(channelName, lockName, workerName, workerFilePath, lifecycleHandler) {
     const broadcastChannel = new BroadcastChannel(channelName);
     try {
         return navigator.locks.request(lockName, async () => {
@@ -61,6 +61,8 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
                 }
 
                 let heartbeatId = setTimeout(heartbeatHandler, 40000);
+
+                if (typeof lifecycleHandler === 'function') lifecycleHandler();
             });
         });
     } catch(err) {
@@ -69,10 +71,10 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath) 
     }
 }
 
-async function manageWorker(channelName, lockName, workerName, workerFilePath) {
+async function manageWorker(channelName, lockName, workerName, workerFilePath, lifecycleHandler) {
     while (true) {
         try {
-            await requestWorker(channelName, lockName, workerName, workerFilePath);
+            await requestWorker(channelName, lockName, workerName, workerFilePath, lifecycleHandler);
         } catch(err) {
             console.warn(err);
             await new Promise((resolve, reject) => {
