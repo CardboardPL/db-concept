@@ -12,39 +12,52 @@ self.addEventListener('message', (e) => {
     }
 });
 
+const requestMap = new Map();
+dbChannel.addEventListener('message', (e) => {
+    const { requestId, message } = e.data;
+    const handler = requestMap.get(requestId);
+    if (typeof handler === 'function') {
+        handler(message);
+        requestMap.delete(requestId);
+    } else {
+        console.warn('Received a noneexistent requestId');
+    }
+});
+
 requestsChannel.addEventListener('message', async (e) => {
     const messageRequest = e.data;
-
-    if (!messageRequest) return;
-    
-    const { senderUUID, operationWorker } = messageRequest;
-
-    if (!senderUUID) {
-        console.error('Message sent without a senderUUID');
+    if (typeof messageRequest !== 'object') {
+        console.warn('Ignoring data passed to the hub due to it not being an object');
         return;
     }
 
+    const senderUUID = messageRequest.id;
+    if (!senderUUID) {
+        console.warn('Message received without an id');
+        return;
+    }
+    
+    const requestId = crypto.randomUUID();
     try {
-        switch (operationWorker) {
+        switch (messageRequest.operationWorker) {
             case 'db':
                 const payload = {
-                    type: messageRequest.type
+                    type: messageRequest.type,
+                    requestId
                 }
                 
                 await new Promise((resolve, reject) => {
                     const timeoutId = setTimeout(() => {
                         reject('Database failed to respond in time');
                     }, 15000);
-                    dbChannel.onmessage = (e) => {
+                    requestMap.set(requestId, (message) => {
                         clearTimeout(timeoutId);
-                        if (e.data === 'Success') {
+                        if (message === 'Success') {
                             resolve();
-                            dbChannel.onmessage = null;
                         } else {
-                            reject(e.data);
+                            reject(message);
                         }
-                    }
-
+                    });
                     dbChannel.postMessage(payload);
                 });
                 responsesChannel.postMessage({
@@ -57,6 +70,12 @@ requestsChannel.addEventListener('message', async (e) => {
                 console.error('Invalid Operation Worker');
         }
     } catch(err) {
+        responsesChannel.postMessage({
+            type: 'Status Check',
+            status: 'Failure',
+            senderUUID
+        });
         console.error(err);
     }
+    requestMap.delete(requestId);
 });
