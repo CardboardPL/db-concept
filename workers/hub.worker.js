@@ -2,6 +2,14 @@ const requestsChannel = new BroadcastChannel('requests');
 const responsesChannel = new BroadcastChannel('responses');
 const dbChannel = new BroadcastChannel('db-channel');
 
+function generateHandoffStatusResponse(isSuccessful, senderUUID) {
+    return {
+        type: 'handoff status',
+        isSuccessful,
+        senderUUID
+    }
+}
+
 self.addEventListener('message', (e) => {
     const port = e.ports[0];
     
@@ -60,21 +68,17 @@ requestsChannel.addEventListener('message', async (e) => {
                     });
                     dbChannel.postMessage(payload);
                 });
-                responsesChannel.postMessage({
-                    type: 'Status Check',
-                    status: 'Success',
-                    senderUUID
-                });
+                responsesChannel.postMessage(
+                    generateHandoffStatusResponse(true, senderUUID)
+                );
                 break;
             default:
                 console.error('Invalid Operation Worker');
         }
     } catch(err) {
-        responsesChannel.postMessage({
-            type: 'Status Check',
-            status: 'Failure',
-            senderUUID
-        });
+        responsesChannel.postMessage(
+            generateHandoffStatusResponse(false, senderUUID)
+        );
         console.error(err);
     }
     requestMap.delete(requestId);
