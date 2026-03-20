@@ -1,3 +1,5 @@
+/* Worker Portion */
+
 // Verifies Worker Status
 function checkStatus(worker, message) {
     const { port1, port2 } = new MessageChannel();
@@ -33,7 +35,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
     try {
         return navigator.locks.request(lockName, async () => {
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Initializing'));
-            const worker = new Worker(workerFilePath);
+            const worker = new Worker(workerFilePath, { type: "module" });
             worker.onerror = (event) => {
                 worker.terminate();
                 throw event.error;
@@ -46,7 +48,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
             await new Promise((resolve, reject) => {
                 worker.onerror = (event) => {
                     worker.terminate();
-                    reject(event.error)
+                    reject(event.error);
                 };
 
                 async function heartbeatHandler() {
@@ -77,7 +79,7 @@ async function manageWorker(channelName, lockName, workerName, workerFilePath, l
             await requestWorker(channelName, lockName, workerName, workerFilePath, lifecycleHandler);
         } catch(err) {
             console.warn(err);
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 setTimeout(() => {
                     resolve();
                 }, 1000);
@@ -88,3 +90,5 @@ async function manageWorker(channelName, lockName, workerName, workerFilePath, l
 
 manageWorker('w1', 'w1', 'Hub Worker', './workers/hub.worker.js');
 manageWorker('w2', 'w2', 'Database Worker', './workers/db.worker.js');
+
+/* Page Setup */
