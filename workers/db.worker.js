@@ -1,4 +1,7 @@
+import { isPlainObject } from "../utils/isPlainObject.js";
+
 const dbChannel = new BroadcastChannel('db-channel');
+const responsesChannel = new BroadcastChannel('responses');
 
 self.addEventListener('message', (e) => {
     const port = e.ports[0];
@@ -8,4 +11,31 @@ self.addEventListener('message', (e) => {
             port.postMessage('Active');
         }
     }
+});
+
+dbChannel.addEventListener('message', (e) => {
+    const DBRequest = e.data;
+    if (!DBRequest) {
+        console.error('Received a falsy database request');
+        return;
+    }
+    if (!isPlainObject(DBRequest)) {
+        console.error('Received a database request that isn\'t a plain object');
+        return;
+    }
+
+    const { requestId, type } = DBRequest;
+    if (!requestId) {
+        console.error('Received a database request without a requestId');
+        return;
+    }
+    dbChannel.postMessage({
+        requestId,
+        message: 'Success'
+    });
+
+    
+    navigator.locks.request('db-op', async () => {
+        // Data Parsing
+    });
 });
