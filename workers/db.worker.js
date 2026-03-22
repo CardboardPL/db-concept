@@ -36,6 +36,18 @@ dbChannel.addEventListener('message', (e) => {
 
     
     navigator.locks.request('db-op', async () => {
-        // Data Parsing
+        try {
+            switch (type) {
+                case '':
+                    break;
+                default:
+                    throw new Error('Invalid type');
+            }
+        } catch (error) {
+            responsesChannel.postMessage({
+                status: 'Database Error',
+                error
+            });
+        }
     });
 });
