@@ -44,7 +44,6 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
             await checkStatus(worker, `${workerName} Status Check`);
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
-            worker.onerror = null;
             await new Promise((resolve, reject) => {
                 worker.onerror = (event) => {
                     worker.terminate();
