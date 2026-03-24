@@ -46,7 +46,6 @@ Note: The properties from the hub to database object must also be present in the
 ```js
 {
     type: 'heartbeat',
-    ttl: TIME_TO_LIVE
 }
 ```
 
