@@ -1,11 +1,13 @@
 /* Worker Portion */
 
 // Verifies Worker Status
-function checkStatus(worker, message) {
+function checkStatus(worker) {
     const { port1, port2 } = new MessageChannel();
     return new Promise((resolve, reject) => {
         port1.start();
-        worker.postMessage(message, [port2]);
+        worker.postMessage({
+            type: 'heartbeat',
+        }, [port2]);
         
         const timeoutId = setTimeout(() => {
             reject('Failed to respond within the 15 second period');
@@ -13,19 +15,21 @@ function checkStatus(worker, message) {
 
         port1.onmessage = (event) => {
             clearTimeout(timeoutId);
-            if (event.data === 'Active') {
+            if (event.data.type === 'heartbeat-response') {
                 resolve();
             } else {
-                reject(new Error(event.data));
+                reject(new Error(event.data.error));
             }
             port1.close();
         }
     });
 }
 
-function generateStatusBroadcastMessage(workerName, state) {
+function generateStatusBroadcastMessage(workerName, status) {
     return {
-        message: `${workerName}: ${state}`,
+        type: 'worker-status',
+        id: workerName,
+        status,
         timestamp: Date.now()
     }
 }
@@ -41,7 +45,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
                 throw event.error;
             };
         
-            await checkStatus(worker, `${workerName} Status Check`);
+            await checkStatus(worker);
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
             await new Promise((resolve, reject) => {
@@ -53,7 +57,7 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
                 async function heartbeatHandler() {
                     clearTimeout(heartbeatId);
                     try {
-                        await checkStatus(worker, `${workerName} Status Check`);
+                        await checkStatus(worker);
                         heartbeatId = setTimeout(heartbeatHandler, 40000)
                     } catch (e) {
                         worker.terminate();

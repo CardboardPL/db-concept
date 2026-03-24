@@ -2,31 +2,33 @@ const requestsChannel = new BroadcastChannel('requests');
 const responsesChannel = new BroadcastChannel('responses');
 const dbChannel = new BroadcastChannel('db-channel');
 
-function generateHandoffStatusResponse(isSuccessful, senderUUID) {
+function generateHandoffStatusResponse(status, id) {
     return {
-        type: 'handoff status',
-        isSuccessful,
-        senderUUID
-    }
+        type: 'handoff-status',
+        status,
+        id
+    };
 }
 
 self.addEventListener('message', (e) => {
     const port = e.ports[0];
     
     if (port) {
-        if (e.data === 'Hub Worker Status Check') {
-            port.postMessage('Active');
+        const type = e.data.type;
+        if (type === 'heartbeat') {
+            port.postMessage({
+                type: 'heartbeat-response'
+            });
         }
     }
 });
 
 const requestMap = new Map();
 dbChannel.addEventListener('message', (e) => {
-    const { requestId, message } = e.data;
+    const { type, requestId } = e.data;
     const handler = requestMap.get(requestId);
     if (typeof handler === 'function') {
-        handler(message);
-        requestMap.delete(requestId);
+        handler(type);
     } else {
         console.warn('Received a noneexistent requestId');
     }
@@ -39,15 +41,15 @@ requestsChannel.addEventListener('message', async (e) => {
         return;
     }
 
-    const senderUUID = messageRequest.id;
-    if (!senderUUID) {
+    const id = messageRequest.id;
+    if (!id) {
         console.warn('Message received without an id');
         return;
     }
     
     const requestId = crypto.randomUUID();
     try {
-        switch (messageRequest.operationWorker) {
+        switch (messageRequest.op) {
             case 'db':
                 const payload = {
                     type: messageRequest.type,
@@ -58,18 +60,17 @@ requestsChannel.addEventListener('message', async (e) => {
                     const timeoutId = setTimeout(() => {
                         reject('Database failed to respond in time');
                     }, 15000);
-                    requestMap.set(requestId, (message) => {
+                    requestMap.set(requestId, (type) => {
                         clearTimeout(timeoutId);
-                        if (message === 'Success') {
+                        if (type === 'handoff-response') {
                             resolve();
-                        } else {
-                            reject(message);
+                            requestMap.delete(requestId);
                         }
                     });
                     dbChannel.postMessage(payload);
                 });
                 responsesChannel.postMessage(
-                    generateHandoffStatusResponse(true, senderUUID)
+                    generateHandoffStatusResponse(true, id)
                 );
                 break;
             default:
@@ -77,7 +78,7 @@ requestsChannel.addEventListener('message', async (e) => {
         }
     } catch(err) {
         responsesChannel.postMessage(
-            generateHandoffStatusResponse(false, senderUUID)
+            generateHandoffStatusResponse(false, id)
         );
         console.error(err);
     }

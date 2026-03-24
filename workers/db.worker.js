@@ -7,8 +7,11 @@ self.addEventListener('message', (e) => {
     const port = e.ports[0];
     
     if (port) {
-        if (e.data === 'Database Worker Status Check') {
-            port.postMessage('Active');
+        const type = e.data.type;
+        if (type === 'heartbeat') {
+            port.postMessage({
+                type: 'heartbeat-response'
+            });
         }
     }
 });
@@ -30,10 +33,9 @@ dbChannel.addEventListener('message', (e) => {
         return;
     }
     dbChannel.postMessage({
-        requestId,
-        message: 'Success'
+        type: 'handoff-response',
+        requestId
     });
-
     
     navigator.locks.request('db-op', async () => {
         try {
@@ -45,7 +47,7 @@ dbChannel.addEventListener('message', (e) => {
             }
         } catch (error) {
             responsesChannel.postMessage({
-                status: 'Database Error',
+                type: 'database-error',
                 error
             });
         }
