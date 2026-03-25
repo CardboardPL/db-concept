@@ -46,13 +46,22 @@ requestsChannel.addEventListener('message', async (e) => {
         console.warn('Message received without an id');
         return;
     }
+
+    const type = messageRequest.type;
+    if (type === 'hub-status') {
+        responsesChannel.postMessage({
+            type: 'hub-status',
+            id
+        });
+        return;
+    }
     
     const requestId = crypto.randomUUID();
     try {
         switch (messageRequest.op) {
             case 'db':
                 const payload = {
-                    type: messageRequest.type,
+                    type,
                     requestId
                 }
                 
