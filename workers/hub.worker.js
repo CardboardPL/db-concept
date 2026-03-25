@@ -84,3 +84,7 @@ requestsChannel.addEventListener('message', async (e) => {
     }
     requestMap.delete(requestId);
 });
+
+self.postMessage({
+    type: 'worker-started'
+});

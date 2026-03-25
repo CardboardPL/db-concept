@@ -60,3 +60,7 @@ self.addEventListener('message', handleDirectMessage);
 
 const db = new Database('primary-db');
 dbChannel.addEventListener('message', handleRequest);
+
+self.postMessage({
+    type: 'worker-started'
+});

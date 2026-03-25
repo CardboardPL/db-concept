@@ -44,8 +44,17 @@ async function requestWorker(channelName, lockName, workerName, workerFilePath, 
                 worker.terminate();
                 throw event.error;
             };
-        
-            await checkStatus(worker);
+            
+            await new Promise((resolve, reject) => {
+                worker.onmessage = (e) => {
+                    if (e.data.type === 'worker-started') {
+                        resolve();
+                    }
+                }
+                setTimeout(() => {
+                    reject('Failed to start on time');
+                }, 5000);
+            });
             broadcastChannel.postMessage(generateStatusBroadcastMessage(workerName, 'Online'));
 
             await new Promise((resolve, reject) => {
@@ -91,7 +100,7 @@ async function manageWorker(channelName, lockName, workerName, workerFilePath, l
     }
 }
 
-manageWorker('w1', 'w1', 'Hub Worker', './workers/hub.worker.js');
-manageWorker('w2', 'w2', 'Database Worker', './workers/db.worker.js');
+manageWorker('workers', 'w1', 'Hub Worker', './workers/hub.worker.js');
+manageWorker('workers', 'w2', 'Database Worker', './workers/db.worker.js');
 
 /* Page Setup */
