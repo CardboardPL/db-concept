@@ -1,11 +1,12 @@
+import { Database } from "../db/Database.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
 
 const dbChannel = new BroadcastChannel('db-channel');
 const responsesChannel = new BroadcastChannel('responses');
 
-self.addEventListener('message', (e) => {
+function handleDirectMessage(e) {
     const port = e.ports[0];
-    
+
     if (port) {
         const type = e.data.type;
         if (type === 'heartbeat') {
@@ -14,9 +15,9 @@ self.addEventListener('message', (e) => {
             });
         }
     }
-});
+}
 
-dbChannel.addEventListener('message', (e) => {
+function handleRequest(e) {
     const DBRequest = e.data;
     if (!DBRequest) {
         console.error('Received a falsy database request');
@@ -38,6 +39,7 @@ dbChannel.addEventListener('message', (e) => {
     });
     
     navigator.locks.request('db-op', async () => {
+        if (db.isClosed()) await db.open();
         try {
             switch (type) {
                 case '':
@@ -52,4 +54,9 @@ dbChannel.addEventListener('message', (e) => {
             });
         }
     });
-});
+}
+
+self.addEventListener('message', handleDirectMessage);
+
+const db = new Database('primary-db');
+dbChannel.addEventListener('message', handleRequest);
