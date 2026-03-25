@@ -18,17 +18,17 @@ function handleDirectMessage(e) {
 }
 
 function handleRequest(e) {
-    const DBRequest = e.data;
-    if (!DBRequest) {
+    const request = e.data;
+    if (!request) {
         console.error('Received a falsy database request');
         return;
     }
-    if (!isPlainObject(DBRequest)) {
+    if (!isPlainObject(request)) {
         console.error('Received a database request that isn\'t a plain object');
         return;
     }
 
-    const { requestId, type } = DBRequest;
+    const { type, requestId } = request;
     if (!requestId) {
         console.error('Received a database request without a requestId');
         return;
@@ -42,7 +42,7 @@ function handleRequest(e) {
         if (db.isClosed()) await db.open();
         try {
             switch (type) {
-                case '':
+                case 'database-request':
                     break;
                 default:
                     throw new Error('Invalid type');
