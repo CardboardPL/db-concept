@@ -104,3 +104,61 @@ manageWorker('workers', 'w1', 'Hub Worker', './workers/hub.worker.js');
 manageWorker('workers', 'w2', 'Database Worker', './workers/db.worker.js');
 
 /* Page Setup */
+const requests = new BroadcastChannel('requests');
+const responses = new BroadcastChannel('responses');
+
+const pageId = crypto.randomUUID();
+
+async function syncHubStatus() {
+    let tries = 0;
+    let delay;
+    while (true) {
+        tries++;
+        delay = Math.min(tries * 1000, 5000);
+        try {
+            await new Promise((resolve, reject) => {
+                requests.postMessage({
+                    type: 'hub-status',
+                    id: pageId
+                });
+                const timeoutId = setTimeout(() => {
+                    reject('failed to get hub-status in time');
+                }, delay + 500);
+                requestMap.set(pageId + '-hubStatus', () => {
+                    clearTimeout(timeoutId);
+                    resolve();
+                });
+            });
+            break;
+        } catch(err) {
+            console.error(err);
+            await new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, delay);
+            });
+        }
+    }
+}
+
+// Initialize response handling
+const requestMap = new Map();
+responses.addEventListener('message', (e) => {
+    if (!e.data) console.error('received a falsy message');
+    const { type, id } = e.data;
+    if (type === 'hub-status' && id === pageId) {
+        const key = pageId + '-hubStatus';
+        const handler = requestMap.get(key);
+        if (typeof handler === 'function') {
+            handler();
+            requestMap.delete(key);
+        }
+    }
+});
+
+await syncHubStatus();
+
+// Listen to workers channel to keep track of worker status
+const workersChannel = new BroadcastChannel('workers');
+
+// Additional startup code
