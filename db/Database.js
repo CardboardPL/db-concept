@@ -35,6 +35,10 @@ export class Database {
         return versionToUse;
     }
 
+    isClosed() {
+        return this.#state === 'closed' && this.#upgradeStatus !== 'upgrading';
+    }
+
     async open(handlers) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
