@@ -81,7 +81,7 @@ async function manageWorker(channelName, lockName, workerName, workerFilePath, l
         try {
             await requestWorker(channelName, lockName, workerName, workerFilePath, lifecycleHandler);
         } catch(err) {
-            console.warn(err);
+            console.warn(workerName + ': ' + err);
             await new Promise((resolve) => {
                 setTimeout(() => {
                     resolve();
