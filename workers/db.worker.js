@@ -30,6 +30,12 @@ function handleRequest(e) {
     }
 
     const { type, id, requestId } = request;
+    if (type === 'abort-transaction') {
+        const abort = requestsMap.get(requestId);
+        if (typeof abort === 'function') abort();
+        requestsMap.delete(requestId);
+    }
+
     if (!id) {
         console.error('Received a database request without an id');
         return;
@@ -45,11 +51,13 @@ function handleRequest(e) {
     });
     if (requestsMap.has(requestId)) {
         return;
-    } else {
-        requestsMap.set(requestId, true);
     }
     
     navigator.locks.request('db-op', async () => {
+        requestsMap.set(requestId, () => {
+            db.abortCurrentTransaction();
+        });
+        if (!requestsMap.has(requestId)) return;
         if (db.isClosed()) await db.open();
         try {
             switch (type) {
