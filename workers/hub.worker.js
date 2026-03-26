@@ -62,13 +62,22 @@ requestsChannel.addEventListener('message', async (e) => {
             case 'db':
                 const payload = {
                     type,
+                    id,
                     requestId
                 }
                 
                 await new Promise((resolve, reject) => {
-                    const timeoutId = setTimeout(() => {
-                        reject('Database failed to respond in time');
-                    }, 15000);
+                    let tries = 0;
+                    const timeoutHandler = () => {
+                        if (tries === 3) {
+                            reject('Database failed to respond in time');
+                            clearTimeout(timeoutId);
+                        }
+                        dbChannel.postMessage(payload);
+                        timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
+                        tries++;
+                    };
+                    let timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
                     requestMap.set(requestId, (type) => {
                         clearTimeout(timeoutId);
                         if (type === 'handoff-response') {
@@ -76,7 +85,6 @@ requestsChannel.addEventListener('message', async (e) => {
                             requestMap.delete(requestId);
                         }
                     });
-                    dbChannel.postMessage(payload);
                 });
                 responsesChannel.postMessage(
                     generateHandoffStatusResponse(true, id)
