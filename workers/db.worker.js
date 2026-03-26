@@ -3,6 +3,7 @@ import { isPlainObject } from "../utils/isPlainObject.js";
 
 const dbChannel = new BroadcastChannel('db-channel');
 const responsesChannel = new BroadcastChannel('responses');
+const requestsMap = new Map();
 
 function handleDirectMessage(e) {
     const port = e.ports[0];
@@ -28,15 +29,25 @@ function handleRequest(e) {
         return;
     }
 
-    const { type, requestId } = request;
+    const { type, id, requestId } = request;
+    if (!id) {
+        console.error('Received a database request without an id');
+        return;
+    }
     if (!requestId) {
         console.error('Received a database request without a requestId');
         return;
     }
+    
     dbChannel.postMessage({
         type: 'handoff-response',
         requestId
     });
+    if (requestsMap.has(requestId)) {
+        return;
+    } else {
+        requestsMap.set(requestId, true);
+    }
     
     navigator.locks.request('db-op', async () => {
         if (db.isClosed()) await db.open();
@@ -50,7 +61,8 @@ function handleRequest(e) {
         } catch (error) {
             responsesChannel.postMessage({
                 type: 'database-error',
-                error
+                error,
+                id
             });
         }
     });
