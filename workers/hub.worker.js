@@ -67,17 +67,18 @@ requestsChannel.addEventListener('message', async (e) => {
                 }
                 
                 await new Promise((resolve, reject) => {
-                    let tries = 0;
+                    let tries = 1;
                     const timeoutHandler = () => {
-                        if (tries === 3) {
+                        if (tries === 4) {
                             reject('Database failed to respond in time');
-                            clearTimeout(timeoutId);
+                            requestMap.delete(requestId);
+                            return;
                         }
                         dbChannel.postMessage(payload);
                         timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
                         tries++;
                     };
-                    let timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
+                    let timeoutId = setTimeout(timeoutHandler, Math.min(100, 1500));
                     requestMap.set(requestId, (type) => {
                         clearTimeout(timeoutId);
                         if (type === 'handoff-response') {
