@@ -70,6 +70,10 @@ requestsChannel.addEventListener('message', async (e) => {
                     let tries = 1;
                     const timeoutHandler = () => {
                         if (tries === 4) {
+                            dbChannel.postMessage({
+                                type: 'abort-transaction',
+                                requestId
+                            });
                             reject('Database failed to respond in time');
                             requestMap.delete(requestId);
                             return;
