@@ -53,27 +53,32 @@ function handleRequest(e) {
         return;
     }
     
-    navigator.locks.request('db-op', async () => {
-        requestsMap.set(requestId, () => {
-            db.abortCurrentTransaction();
-        });
-        if (!requestsMap.has(requestId)) return;
-        if (db.isClosed()) await db.open();
-        try {
-            switch (type) {
-                case 'database-request':
-                    break;
-                default:
-                    throw new Error('Invalid type');
-            }
-        } catch (error) {
-            responsesChannel.postMessage({
-                type: 'database-error',
-                error,
-                id
+    try {
+        const abortController = new AbortController();
+        navigator.locks.request('db-op', { signal: abortController.signal  }, async () => {
+            requestsMap.set(requestId, () => {
+                abortController.abort('Aborted Operation');
             });
-        }
-    });
+            if (!requestsMap.has(requestId)) return;
+            if (db.isClosed()) await db.open();
+            try {
+                switch (type) {
+                    case 'database-request':
+                        break;
+                    default:
+                        throw new Error('Invalid type');
+                }
+            } catch (error) {
+                responsesChannel.postMessage({
+                    type: 'database-error',
+                    error,
+                    id
+                });
+            }
+        });
+    } catch(err) {
+        console.error(err);
+    }
 }
 
 self.addEventListener('message', handleDirectMessage);
