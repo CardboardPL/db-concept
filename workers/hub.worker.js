@@ -11,19 +11,19 @@ function generateHandoffStatusResponse(status, id) {
     };
 }
 
-function handleHandoff(resolve, reject, requestId, payload) {
+function handleHandoff(resolve, reject, channel, name, requestId, payload) {
     let tries = 1;
     const timeoutHandler = () => {
         if (tries === 4) {
-            dbChannel.postMessage({
+            channel.postMessage({
                 type: 'abort-transaction',
                 requestId
             });
-            reject('Database failed to respond in time');
+            reject(`${name} failed to respond in time`);
             requestMap.delete(requestId);
             return;
         }
-        dbChannel.postMessage(payload);
+        channel.postMessage(payload);
         timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
         tries++;
     };
@@ -93,7 +93,7 @@ requestsChannel.addEventListener('message', async (e) => {
                 }
                 
                 await new Promise((resolve, reject) => {
-                    handleHandoff(resolve, reject, requestId, payload);
+                    handleHandoff(resolve, reject, dbChannel, 'Database', requestId, payload);
                 });
                 responsesChannel.postMessage(
                     generateHandoffStatusResponse(true, id)
