@@ -1,6 +1,7 @@
 const requestsChannel = new BroadcastChannel('requests');
 const responsesChannel = new BroadcastChannel('responses');
 const dbChannel = new BroadcastChannel('db-channel');
+const requestMap = new Map();
 
 function generateHandoffStatusResponse(status, id) {
     return {
@@ -8,6 +9,32 @@ function generateHandoffStatusResponse(status, id) {
         status,
         id
     };
+}
+
+function handleHandoff(resolve, reject, requestId, payload) {
+    let tries = 1;
+    const timeoutHandler = () => {
+        if (tries === 4) {
+            dbChannel.postMessage({
+                type: 'abort-transaction',
+                requestId
+            });
+            reject('Database failed to respond in time');
+            requestMap.delete(requestId);
+            return;
+        }
+        dbChannel.postMessage(payload);
+        timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
+        tries++;
+    };
+    let timeoutId = setTimeout(timeoutHandler, Math.min(100, 1500));
+    requestMap.set(requestId, (type) => {
+        clearTimeout(timeoutId);
+        if (type === 'handoff-response') {
+            resolve();
+            requestMap.delete(requestId);
+        }
+    });
 }
 
 self.addEventListener('message', (e) => {
@@ -23,7 +50,6 @@ self.addEventListener('message', (e) => {
     }
 });
 
-const requestMap = new Map();
 dbChannel.addEventListener('message', (e) => {
     const { type, requestId } = e.data;
     const handler = requestMap.get(requestId);
@@ -67,29 +93,7 @@ requestsChannel.addEventListener('message', async (e) => {
                 }
                 
                 await new Promise((resolve, reject) => {
-                    let tries = 1;
-                    const timeoutHandler = () => {
-                        if (tries === 4) {
-                            dbChannel.postMessage({
-                                type: 'abort-transaction',
-                                requestId
-                            });
-                            reject('Database failed to respond in time');
-                            requestMap.delete(requestId);
-                            return;
-                        }
-                        dbChannel.postMessage(payload);
-                        timeoutId = setTimeout(timeoutHandler, Math.min(tries * 500, 1500));
-                        tries++;
-                    };
-                    let timeoutId = setTimeout(timeoutHandler, Math.min(100, 1500));
-                    requestMap.set(requestId, (type) => {
-                        clearTimeout(timeoutId);
-                        if (type === 'handoff-response') {
-                            resolve();
-                            requestMap.delete(requestId);
-                        }
-                    });
+                    handleHandoff(resolve, reject, requestId, payload);
                 });
                 responsesChannel.postMessage(
                     generateHandoffStatusResponse(true, id)
