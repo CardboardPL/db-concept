@@ -37,6 +37,15 @@ function handleHandoff(resolve, reject, channel, name, requestId, payload) {
     });
 }
 
+async function handleDatabaseRequest(requestId, data) {    
+    await new Promise((resolve, reject) => {
+        handleHandoff(resolve, reject, dbChannel, 'Database', requestId, {
+            data,
+            requestId
+        });
+    });
+}
+
 self.addEventListener('message', (e) => {
     const port = e.ports[0];
     
@@ -86,22 +95,17 @@ requestsChannel.addEventListener('message', async (e) => {
     try {
         switch (messageRequest.op) {
             case 'db':
-                const payload = {
+                await handleDatabaseRequest(requestId, {
                     type,
                     id,
-                    requestId
-                }
-                
-                await new Promise((resolve, reject) => {
-                    handleHandoff(resolve, reject, dbChannel, 'Database', requestId, payload);
                 });
-                responsesChannel.postMessage(
-                    generateHandoffStatusResponse(true, id)
-                );
                 break;
             default:
-                console.error('Invalid Operation Worker');
+                throw new Error('Invalid Operation Worker');
         }
+        responsesChannel.postMessage(
+            generateHandoffStatusResponse(true, id)
+        );
     } catch(err) {
         responsesChannel.postMessage(
             generateHandoffStatusResponse(false, id)
