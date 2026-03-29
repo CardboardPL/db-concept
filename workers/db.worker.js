@@ -5,6 +5,10 @@ const dbChannel = new BroadcastChannel('db-channel');
 const responsesChannel = new BroadcastChannel('responses');
 const requestsMap = new Map();
 
+async function handleDatabaseRequest(data) {
+
+}
+
 function handleDirectMessage(e) {
     const port = e.ports[0];
 
@@ -64,6 +68,9 @@ function handleRequest(e) {
             try {
                 switch (type) {
                     case 'database-request':
+                        await handleDatabaseRequest({
+                            id,
+                        });
                         break;
                     default:
                         throw new Error('Invalid type');
