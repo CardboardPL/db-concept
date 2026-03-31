@@ -98,6 +98,7 @@ requestsChannel.addEventListener('message', async (e) => {
                 await handleDatabaseRequest(requestId, {
                     type,
                     id,
+                    method: messageRequest.method
                 });
                 break;
             default:
