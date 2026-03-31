@@ -6,7 +6,24 @@ const responsesChannel = new BroadcastChannel('responses');
 const requestsMap = new Map();
 
 async function handleDatabaseRequest(data) {
+    let method = data.method;
+    if (!method) throw new Error('Requested a database request without a specified method');
+    if (typeof method !== 'string') throw new Error('Passed in method isn\'t a string');
+    method = method.toUpperCase();
 
+    const { id } = data;
+    switch (method) {
+        case 'GET':
+            break;
+        case 'POST':
+            break;
+        case 'PUT':
+            break;
+        case 'DELETE':
+            break;
+        default:
+            throw new Error('Unknown method');
+    }
 }
 
 function handleDirectMessage(e) {
@@ -70,6 +87,7 @@ function handleRequest(e) {
                     case 'database-request':
                         await handleDatabaseRequest({
                             id,
+                            method: request.method
                         });
                         break;
                     default:
