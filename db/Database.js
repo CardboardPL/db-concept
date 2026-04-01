@@ -156,6 +156,7 @@ export class Database {
     abortCurrentTransaction() {
         if (this.#transaction.active !== true) throw new Error('There is no ongoing transaction');
         this.#transaction.instance.abort();
+        this.#resetTransactionState();
     }
 
     async upgrade(handlers, attemptCap) {
