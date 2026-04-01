@@ -78,6 +78,7 @@ function handleRequest(e) {
         const abortController = new AbortController();
         navigator.locks.request('db-op', { signal: abortController.signal  }, async () => {
             requestsMap.set(requestId, () => {
+                db.abortCurrentTransaction();
                 abortController.abort('Aborted Operation');
             });
             if (!requestsMap.has(requestId)) return;
