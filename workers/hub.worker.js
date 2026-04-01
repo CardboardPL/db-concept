@@ -93,7 +93,7 @@ requestsChannel.addEventListener('message', async (e) => {
     
     const requestId = crypto.randomUUID();
     try {
-        switch (messageRequest.op) {
+        switch (messageRequest.worker) {
             case 'db':
                 await handleDatabaseRequest(requestId, {
                     type,
@@ -102,7 +102,7 @@ requestsChannel.addEventListener('message', async (e) => {
                 });
                 break;
             default:
-                throw new Error('Invalid Operation Worker');
+                throw new Error('Unknown Worker');
         }
         responsesChannel.postMessage(
             generateHandoffStatusResponse(true, id)
