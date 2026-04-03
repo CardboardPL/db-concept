@@ -5,25 +5,34 @@ const dbChannel = new BroadcastChannel('db-channel');
 const responsesChannel = new BroadcastChannel('responses');
 const requestsMap = new Map();
 
-async function handleDatabaseRequest(data) {
-    let method = data.method;
-    if (!method) throw new Error('Requested a database request without a specified method');
-    if (typeof method !== 'string') throw new Error('Passed in method isn\'t a string');
-    method = method.toUpperCase();
+const operationHandlers = {
 
-    const { id } = data;
-    switch (method) {
-        case 'GET':
-            break;
-        case 'POST':
-            break;
-        case 'PUT':
-            break;
-        case 'DELETE':
-            break;
-        default:
-            throw new Error('Unknown method');
-    }
+}
+function handleDatabaseRequest(data) {
+    // Abort Handling
+    const requestId = data.requestId;
+    const abortController = new AbortController();
+    requestsMap.set(requestId, () => {
+        db.abortCurrentTransaction();
+        abortController.abort('Aborted Operation');
+    });
+
+    // Request Handling
+    return navigator.locks.request('db-op', { signal: abortController.signal  }, async () => { 
+        if (!requestsMap.has(requestId)) return;
+        if (db.isClosed()) await db.open();
+
+        let op = data.op;
+        if (!op) throw new Error('Requested a database request without a specified op');
+        if (typeof op !== 'string') throw new Error('Passed in an op that isn\'t a string');
+        op = op.toUpperCase();
+
+        const handler = operationHandlers[op];
+        if (typeof handler !== 'function') throw new Error('Invalid op');
+        await handler({
+            id: data.id
+        });
+    });
 }
 
 function handleDirectMessage(e) {
@@ -39,7 +48,7 @@ function handleDirectMessage(e) {
     }
 }
 
-function handleRequest(e) {
+async function handleRequest(e) {
     const request = e.data;
     if (!request) {
         console.error('Received a falsy database request');
@@ -50,13 +59,15 @@ function handleRequest(e) {
         return;
     }
 
-    const { type, id, requestId } = request;
+    const { type, requestId } = request;
     if (type === 'abort-transaction') {
         const abort = requestsMap.get(requestId);
         if (typeof abort === 'function') abort();
         requestsMap.delete(requestId);
+        return;
     }
 
+    const { id } = request;
     if (!id) {
         console.error('Received a database request without an id');
         return;
@@ -71,39 +82,29 @@ function handleRequest(e) {
         requestId
     });
     if (requestsMap.has(requestId)) {
+        console.warn('Possible duplicate request', request);
         return;
     }
     
     try {
-        const abortController = new AbortController();
-        navigator.locks.request('db-op', { signal: abortController.signal  }, async () => {
-            requestsMap.set(requestId, () => {
-                db.abortCurrentTransaction();
-                abortController.abort('Aborted Operation');
-            });
-            if (!requestsMap.has(requestId)) return;
-            if (db.isClosed()) await db.open();
-            try {
-                switch (type) {
-                    case 'database-request':
-                        await handleDatabaseRequest({
-                            id,
-                            method: request.method
-                        });
-                        break;
-                    default:
-                        throw new Error('Invalid type');
-                }
-            } catch (error) {
-                responsesChannel.postMessage({
-                    type: 'database-error',
-                    error,
-                    id
+        switch (type) {
+            case 'database-request':
+                await handleDatabaseRequest({
+                    id,
+                    requestId,
+                    op: request.op
                 });
-            }
+                break;
+            default:
+                throw new Error('Invalid type');
+        }
+    } catch(error) {
+        console.error(error);
+        responsesChannel.postMessage({
+            type: 'database-error',
+            error,
+            id
         });
-    } catch(err) {
-        console.error(err);
     }
 }
 
