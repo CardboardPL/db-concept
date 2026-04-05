@@ -48,6 +48,9 @@ function handleDirectMessage(e) {
     }
 }
 
+const typeHandlers = {
+    'database-request': handleDatabaseRequest
+};
 async function handleRequest(e) {
     const request = e.data;
     if (!request) {
@@ -87,17 +90,13 @@ async function handleRequest(e) {
     }
     
     try {
-        switch (type) {
-            case 'database-request':
-                await handleDatabaseRequest({
-                    id,
-                    requestId,
-                    op: request.op
-                });
-                break;
-            default:
-                throw new Error('Invalid type');
-        }
+        const handler = typeHandlers[type]
+        if (typeof handler !== 'function') throw new Error('Invalid type');
+        await handler({
+            id,
+            requestId,
+            op: request.op
+        });
     } catch(error) {
         console.error(error);
         responsesChannel.postMessage({
