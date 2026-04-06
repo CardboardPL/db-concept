@@ -1,4 +1,5 @@
 import { DatabaseError } from "./DatabaseError.js";
+import { isPlainObject } from "../utils/isPlainObject.js";
 
 export class Database {
     #db;
@@ -109,7 +110,7 @@ export class Database {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
         if (this.#transaction.active === true) throw new Error('A transaction is in progress');
-        if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
+        if (!isPlainObject(handlers)) throw new Error('Must pass a valid handler object');
 
         try {
             await new Promise((resolve, reject) => {
