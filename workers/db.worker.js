@@ -97,11 +97,11 @@ async function handleRequest(e) {
             requestId,
             op: request.op
         });
-    } catch(error) {
-        console.error(error);
+    } catch(err) {
+        console.error(err);
         responsesChannel.postMessage({
             type: 'database-error',
-            error,
+            error: err.message,
             id
         });
     }
