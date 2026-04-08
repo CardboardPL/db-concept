@@ -5,9 +5,14 @@ const dbChannel = new BroadcastChannel('db-channel');
 const responsesChannel = new BroadcastChannel('responses');
 const requestsMap = new Map();
 
+// Handler Lookups
 const operationHandlers = {
 
 }
+const typeHandlers = {
+    'database-request': handleDatabaseRequest
+};
+
 function handleDatabaseRequest(data) {
     // Abort Handling
     const requestId = data.requestId;
@@ -48,9 +53,6 @@ function handleDirectMessage(e) {
     }
 }
 
-const typeHandlers = {
-    'database-request': handleDatabaseRequest
-};
 async function handleRequest(e) {
     const request = e.data;
     if (!request) {
