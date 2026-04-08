@@ -11,8 +11,9 @@ function generateHandoffStatusResponse(status, id) {
     };
 }
 
-function handleHandoff(resolve, reject, channel, name, requestId, payload) {
+function handleHandoff(resolve, reject, channel, name, payload) {
     let tries = 1;
+    const { requestId } = payload;
     const timeoutHandler = () => {
         if (tries === 4) {
             channel.postMessage({
@@ -37,12 +38,9 @@ function handleHandoff(resolve, reject, channel, name, requestId, payload) {
     });
 }
 
-async function handleDatabaseRequest(requestId, data) {    
+async function handleDatabaseRequest(payload) {    
     await new Promise((resolve, reject) => {
-        handleHandoff(resolve, reject, dbChannel, 'Database', requestId, {
-            data,
-            requestId
-        });
+        handleHandoff(resolve, reject, dbChannel, 'Database', payload);
     });
 }
 
@@ -95,9 +93,10 @@ requestsChannel.addEventListener('message', async (e) => {
     try {
         switch (messageRequest.worker) {
             case 'db':
-                await handleDatabaseRequest(requestId, {
-                    type,
+                await handleDatabaseRequest({
+                    requestId,
                     id,
+                    type,
                     op: messageRequest.op
                 });
                 break;
