@@ -13,6 +13,12 @@ const typeHandlers = {
     'database-request': handleDatabaseRequest
 };
 
+function handleUpgradeNeeded(event) {
+    const db = event.target.result;
+    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'title' });
+    taskCategoryStore.createIndex('category', { unique: true });
+}
+
 function handleDatabaseRequest(data) {
     // Abort Handling
     const requestId = data.requestId;
@@ -25,7 +31,9 @@ function handleDatabaseRequest(data) {
     // Request Handling
     return navigator.locks.request('db-op', { signal: abortController.signal  }, async () => { 
         if (!requestsMap.has(requestId)) return;
-        if (db.isClosed()) await db.open();
+        if (db.isClosed()) await db.open({
+            onupgradeneeded: handleUpgradeNeeded
+        });
 
         let op = data.op;
         if (!op) throw new Error('Requested a database request without a specified op');
