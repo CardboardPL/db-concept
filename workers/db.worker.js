@@ -16,7 +16,7 @@ const typeHandlers = {
 function handleUpgradeNeeded(event) {
     const db = event.target.result;
     const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'title' });
-    taskCategoryStore.createIndex('category', { unique: true });
+    taskCategoryStore.createIndex('category', { unique: false });
 }
 
 function handleDatabaseRequest(data) {
