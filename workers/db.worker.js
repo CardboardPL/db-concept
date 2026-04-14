@@ -32,13 +32,16 @@ function handleUpgradeNeeded(event) {
         tailSubTaskId,
         projectId,
         createdAt,
+        lastUpdatedAt
       }
     */
     
+    taskCategoryStore.createIndex('title', { unique: false });
     taskCategoryStore.createIndex('dueDate', { unique: false });
     taskCategoryStore.createIndex('completed', { unique: false });
     taskCategoryStore.createIndex('projectId', { unique: false });
     taskCategoryStore.createIndex('createdAt', { unique: false });
+    taskCategoryStore.createIndex('lastUpdatedAt', { unique: false });
 }
 
 function handleDatabaseRequest(data) {
