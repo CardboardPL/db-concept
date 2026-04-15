@@ -37,12 +37,16 @@ function handleUpgradeNeeded(event) {
         taskId,
         parentTaskId,
         parentProjectId,
+        prevTaskId,
+        nextTaskId,
         headSubTaskId,
         tailSubTaskId
     */
     const taskLinksStore = db.createObjectStore('taskLinks', { keyPath: 'taskId' });
     taskLinksStore.createIndex('parentTaskId', 'parentTaskId', { unique: false });
     taskLinksStore.createIndex('parentProjectId', 'parentProjectId', { unique: false });
+    taskLinksStore.createIndex('prevTaskId', 'prevTaskId', { unique: false });
+    taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: false });
     taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: false });
     taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: false });
 }
