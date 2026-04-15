@@ -29,11 +29,11 @@ function handleUpgradeNeeded(event) {
       }
     */
     
-    taskCategoryStore.createIndex('title', { unique: false });
-    taskCategoryStore.createIndex('dueDate', { unique: false });
-    taskCategoryStore.createIndex('status', { unique: false });
-    taskCategoryStore.createIndex('createdAt', { unique: false });
-    taskCategoryStore.createIndex('lastUpdatedAt', { unique: false });
+    taskCategoryStore.createIndex('title', 'title', { unique: false });
+    taskCategoryStore.createIndex('dueDate', 'dueDate', { unique: false });
+    taskCategoryStore.createIndex('status', 'status', { unique: false });
+    taskCategoryStore.createIndex('createdAt', 'createdAt', { unique: false });
+    taskCategoryStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
 }
 
 function handleDatabaseRequest(data) {
