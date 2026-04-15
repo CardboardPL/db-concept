@@ -15,22 +15,15 @@ const typeHandlers = {
 
 function handleUpgradeNeeded(event) {
     const db = event.target.result;
-    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'id' });
+    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'taskId' });
     
     /* Tasks Schema
       {
-        id,
+        taskId,
         title,
         description,
         dueDate,
-        headTagId,
-        completed,
-        nextTaskId,
-        prevTaskId,
-        parentTaskId,
-        headSubTaskId,
-        tailSubTaskId,
-        projectId,
+        status,
         createdAt,
         lastUpdatedAt
       }
@@ -38,8 +31,7 @@ function handleUpgradeNeeded(event) {
     
     taskCategoryStore.createIndex('title', { unique: false });
     taskCategoryStore.createIndex('dueDate', { unique: false });
-    taskCategoryStore.createIndex('completed', { unique: false });
-    taskCategoryStore.createIndex('projectId', { unique: false });
+    taskCategoryStore.createIndex('status', { unique: false });
     taskCategoryStore.createIndex('createdAt', { unique: false });
     taskCategoryStore.createIndex('lastUpdatedAt', { unique: false });
 }
