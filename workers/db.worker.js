@@ -15,10 +15,9 @@ const typeHandlers = {
 
 function handleUpgradeNeeded(event) {
     const db = event.target.result;
-    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'taskId' });
-    
+
+    // Task Manager
     /* Tasks Schema
-      {
         taskId,
         title,
         description,
@@ -26,9 +25,8 @@ function handleUpgradeNeeded(event) {
         status,
         createdAt,
         lastUpdatedAt
-      }
     */
-    
+    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'taskId' });
     taskCategoryStore.createIndex('title', 'title', { unique: false });
     taskCategoryStore.createIndex('dueDate', 'dueDate', { unique: false });
     taskCategoryStore.createIndex('status', 'status', { unique: false });
@@ -36,11 +34,11 @@ function handleUpgradeNeeded(event) {
     taskCategoryStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
 
     /* TaskLinks Schema
-      taskId,
-      parentTaskId,
-      parentProjectId,
-      headSubTaskId,
-      tailSubTaskId
+        taskId,
+        parentTaskId,
+        parentProjectId,
+        headSubTaskId,
+        tailSubTaskId
     */
     const taskLinksStore = db.createObjectStore('taskLinks', { keyPath: 'taskId' });
     taskLinksStore.createIndex('parentTaskId', 'parentTaskId', { unique: false });
