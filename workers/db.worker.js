@@ -17,6 +17,17 @@ function handleUpgradeNeeded(event) {
     const db = event.target.result;
 
     // Task Manager
+    /* Categories Schema
+        categoryId,
+        categoryName,
+        createdAt,
+        lastUpdatedAt
+    */
+   const taskCategoryStore = db.createObjectStore('taskCategories', { keyPath: 'categoryId' });
+   taskCategoryStore.createIndex('categoryName', 'categoryName', { unique: true });
+   taskCategoryStore.createIndex('createdAt', 'createdAt', { unique: false });
+   taskCategoryStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
+
     /* Tasks Schema
         taskId,
         title,
