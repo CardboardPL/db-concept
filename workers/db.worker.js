@@ -28,6 +28,19 @@ function handleUpgradeNeeded(event) {
    taskCategoryStore.createIndex('createdAt', 'createdAt', { unique: false });
    taskCategoryStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
 
+   /* taskCategoryLinks Schema
+        categoryId,
+        headProjectId,
+        tailProjectId,
+        prevCategoryId
+        nextCategoryId,
+   */
+  const taskCategoryLinksStore = db.createObjectStore('taskCategoryLinks', { keyPath: 'categoryId' });
+  taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: true });
+  taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
+  taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { uniqe: true });
+  taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
+
     /* Tasks Schema
         taskId,
         title,
