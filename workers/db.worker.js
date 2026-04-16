@@ -69,10 +69,10 @@ function handleUpgradeNeeded(event) {
     const taskLinksStore = db.createObjectStore('taskLinks', { keyPath: 'taskId' });
     taskLinksStore.createIndex('parentTaskId', 'parentTaskId', { unique: false });
     taskLinksStore.createIndex('parentProjectId', 'parentProjectId', { unique: false });
-    taskLinksStore.createIndex('prevTaskId', 'prevTaskId', { unique: false });
-    taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: false });
-    taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: false });
-    taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: false });
+    taskLinksStore.createIndex('prevTaskId', 'prevTaskId', { unique: true });
+    taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: true });
+    taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: true });
+    taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: true });
 }
 
 function handleDatabaseRequest(data) {
