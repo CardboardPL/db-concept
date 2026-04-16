@@ -26,12 +26,12 @@ function handleUpgradeNeeded(event) {
         createdAt,
         lastUpdatedAt
     */
-    const taskCategoryStore = db.createObjectStore('tasks', { keyPath: 'taskId' });
-    taskCategoryStore.createIndex('title', 'title', { unique: false });
-    taskCategoryStore.createIndex('dueDate', 'dueDate', { unique: false });
-    taskCategoryStore.createIndex('status', 'status', { unique: false });
-    taskCategoryStore.createIndex('createdAt', 'createdAt', { unique: false });
-    taskCategoryStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
+    const tasksStore = db.createObjectStore('tasks', { keyPath: 'taskId' });
+    tasksStore.createIndex('title', 'title', { unique: false });
+    tasksStore.createIndex('dueDate', 'dueDate', { unique: false });
+    tasksStore.createIndex('status', 'status', { unique: false });
+    tasksStore.createIndex('createdAt', 'createdAt', { unique: false });
+    tasksStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
 
     /* TaskLinks Schema
         taskId,
