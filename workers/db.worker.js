@@ -35,11 +35,13 @@ function handleUpgradeNeeded(event) {
         prevCategoryId
         nextCategoryId,
    */
-  const taskCategoryLinksStore = db.createObjectStore('taskCategoryLinks', { keyPath: 'categoryId' });
-  taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: true });
-  taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
-  taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { uniqe: true });
-  taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
+    const taskCategoryLinksStore = db.createObjectStore('taskCategoryLinks', { keyPath: 'categoryId' });
+    taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: true });
+    taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
+    taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { uniqe: true });
+    taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
+
+    // TODO: WORK ON PROJECT SCHEMAS
 
     /* Tasks Schema
         taskId,
@@ -73,6 +75,8 @@ function handleUpgradeNeeded(event) {
     taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: true });
     taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: true });
     taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: true });
+
+    // TODO: WORK ON TAG SCHEMAS
 }
 
 function handleDatabaseRequest(data) {
