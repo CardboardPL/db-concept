@@ -40,8 +40,29 @@ function handleUpgradeNeeded(event) {
     taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
     taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { uniqe: true });
     taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
+    
+    /* Projects Schema
+        projectId,
+        projectName,
+        createdAt,
+        lastUpdatedAt,
+    */
+    const taskProjectsStore = db.createObjectStore('taskProjects', { keyPath: 'projectId' });
+    taskProjectsStore.createIndex('projectName', 'projectName', { unique: false });
+    taskProjectsStore.createIndex('createdAt', 'createdAt', { unique: false });
+    taskProjectsStore.createIndex('lastUpdatedAt', 'lastUpdatedAt', { unique: false });
 
-    // TODO: WORK ON PROJECT SCHEMAS
+    /* ProjectLinks Schema
+        projectId,
+        categoryId,
+        headTaskId,
+        tailTaskId,
+    */
+   const taskProjectsLinksStore = db.createObjectStore('taskProjectsLinks', { keyPath: 'projectId' });
+   taskProjectsLinksStore.createIndex('projectId', 'projectId', { unique: true });
+   taskProjectsLinksStore.createIndex('categoryId', 'categoryId', { unique: false });
+   taskProjectsLinksStore.createIndex('headTaskId', 'headTaskId', { unique: true });
+   taskProjectsLinksStore.createIndex('tailTaskId', 'tailTaskId', { unique: true });
 
     /* Tasks Schema
         taskId,
