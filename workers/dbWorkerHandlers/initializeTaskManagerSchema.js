@@ -79,5 +79,19 @@ export function initializeTaskManagerSchema(db) {
     taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: true });
     taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: true });
 
-    // TODO: WORK ON TAG SCHEMAS
+    /* TaskTags Schema
+        tagId,
+        tagName,
+        tagColor,
+        order
+    */
+    const taskTagsStore = db.createObjectStore('taskTags', { keyPath: 'tagId' });
+    taskTagsStore.createIndex('tagName', 'tagName', { unique: true });
+    
+    /* TaskTagLinks Schema
+        tagId,
+        taskId,
+    */
+    const taskTagLinksStore = db.createObjectStore('taskTagLinks', { keyPath: 'tagId' });
+    taskTagLinksStore.createIndex('taskId', 'taskId', { unique: true });
 }
