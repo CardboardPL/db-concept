@@ -8,7 +8,11 @@ export class DatabaseManager {
     }
 
     addDatabase(name) {
-
+        if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to add database: name must be a non-empty string');
+        const dbName = name.toUpperCase();
+        if (!this.#databases.has(dbName)) {
+            this.#databases.set(dbName, new Database(dbName));
+        }
     }
 
     removeDatabase(name) {
