@@ -26,6 +26,7 @@ export class DatabaseManager {
     }
 
     getDatabase(name) {
-        
+        if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to get database: name must be a non-empty string');
+        return this.#databases.get(name.toUpperCase());
     }
 }
