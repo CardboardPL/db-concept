@@ -1,32 +1,53 @@
 import { Database } from './Database.js';
 
 export class DatabaseManager {
-    #databases;
+    #buckets;
 
-    constructor() {
-        this.#databases = new Map();
+    constructor(bucketsArr) {
+        this.#buckets = new Map();
+
+        if (Array.isArray(bucketsArr)) {
+            let count = 0;
+            for (const bucket of bucketsArr) {
+                if (typeof bucket !== 'string') continue;
+                this.#buckets.set(bucket.toUpperCase(), new Map());
+                count++;
+            }
+            if (!count) throw new Error('Failed to initialize DatabaseManager: no buckets were created');
+        } else throw new Error('Failed to initialize DatabaseManager: bucketsArr must be an array');
     }
 
-    addDatabase(name) {
+    addDatabase(bucket, name) {
         if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to add database: name must be a non-empty string');
+        if (typeof bucket !== 'string' || !bucket.trim()) throw new Error('Failed to add database: bucket must be a non-empty string');
+        
         const dbName = name.toUpperCase();
-        if (!this.#databases.has(dbName)) {
-            this.#databases.set(dbName, new Database(dbName));
+        const databases = this.#buckets.get(bucket.toUpperCase());
+        if (!databases) throw new Error('Failed to add database: bucket does not exist');
+        if (!databases.has(dbName)) {
+            databases.set(dbName, new Database(dbName));
         }
     }
 
-    removeDatabase(name) {
+    removeDatabase(bucket, name) {
         if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to remove database: name must be a non-empty string');
+        if (typeof bucket !== 'string' || !bucket.trim()) throw new Error('Failed to remove database: bucket must be a non-empty string');
         const dbName = name.toUpperCase();
-        const db = this.#databases.get(dbName);
+        const databases = this.#buckets.get(bucket.toUpperCase());
+        if (!databases) throw new Error('Failed to remove database: bucket does not exist');
+
+        const db = databases.get(dbName);
         if (db) {
             db.close();
-            this.#databases.delete(dbName);
+            databases.delete(dbName);
         }
     }
 
-    getDatabase(name) {
+    getDatabase(bucket, name) {
         if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to get database: name must be a non-empty string');
-        return this.#databases.get(name.toUpperCase());
+        if (typeof bucket !== 'string' || !bucket.trim()) throw new Error('Failed to get database: bucket must be a non-empty string');
+        const databases = this.#buckets.get(bucket.toUpperCase());
+        if (!databases) throw new Error('Failed to get database: bucket does not exist');
+        return databases.get(name.toUpperCase());
     }
 }
