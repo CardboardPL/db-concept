@@ -37,10 +37,10 @@ export class DatabaseManager {
         if (!databases) throw new Error('Failed to remove database: bucket does not exist');
 
         const db = databases.get(dbName);
-        if (db) {
+        if (db && !db.isClosed()) {
             db.close();
-            databases.delete(dbName);
         }
+        databases.delete(dbName);
     }
 
     getDatabase(bucket, name) {
