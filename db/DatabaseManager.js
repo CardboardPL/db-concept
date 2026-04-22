@@ -17,7 +17,12 @@ export class DatabaseManager {
 
     removeDatabase(name) {
         if (typeof name !== 'string' || !name.trim()) throw new Error('Failed to remove database: name must be a non-empty string');
-        this.#databases.delete(name.toUpperCase());
+        const dbName = name.toUpperCase();
+        const db = this.#databases.get(dbName);
+        if (db) {
+            db.close();
+            this.#databases.delete(dbName);
+        }
     }
 
     getDatabase(name) {
