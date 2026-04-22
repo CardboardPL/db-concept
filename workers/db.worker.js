@@ -119,7 +119,7 @@ async function handleRequest(e) {
 
 self.addEventListener('message', handleDirectMessage);
 
-const db = new Database('primary-db');
+const db = new Database('TASKMANAGER');
 dbChannel.addEventListener('message', handleRequest);
 
 self.postMessage({
