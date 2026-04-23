@@ -1,10 +1,12 @@
 import { DatabaseError } from "./DatabaseError.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
+import { Queue } from "../data-structures/Queue.js";
 
 export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
+    #transactionQueues = new Map();
     #transaction = {
         active: false,
         instance: null
@@ -104,6 +106,14 @@ export class Database {
         }
 
         this.#state = 'opened';
+    }
+
+    queueTransaction(storeNames, mode, handlers, options) {
+        
+    }
+
+    onTransactionEnd() {
+        
     }
 
     async transaction(storeNames, mode, handlers, options) {
