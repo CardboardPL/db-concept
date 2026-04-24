@@ -6,7 +6,7 @@ export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
-    #transactionQueues = new Map();
+    #transactionQueue = new Queue();
     #transaction = {
         active: false,
         instance: null
