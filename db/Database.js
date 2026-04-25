@@ -16,9 +16,33 @@ export class Database {
     #name;
     #version;
 
-    constructor(name) {
+    constructor(name, transactionDefinitions) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
+        // if (!Array.isArray(transactionDefinitions)) throw new Error(`Failed to initialize DB: expected transactionDefinitions to be an array but received ${typeof transactionDefinitions}`);
         this.#name = name;
+
+        // for (const definition of transactionDefinitions) {
+        //     if (!isPlainObject(definition)) throw new Error(`Failed to initialize DB: expected a transaction definition to be a plain object but received ${typeof definition}`);
+            
+        //     let type = typeof definition.type === 'string' ? definition.type.trim() : null;
+        //     if (!type) throw new Error(`Failed to initialize DB: expected transaction type to be a non-empty string but received ${definition.type}`);
+        //     if (!['readonly', 'readwrite'].includes(definition.mode)) throw new Error(`Failed to initialie DB: expected mode to either be "readonly" or "readwrite" but received "${definition.mode}"`);
+
+        //     const storeNames = definition.reliesOn;
+        //     if (!Array.isArray(storeNames)) throw new Error(`Failed to initialize DB: expected reliesOn to be an array but received ${typeof storeNames}`);
+
+        //     if (!isPlainObject(definition.handlers)) throw new Error(`Failed to initialize DB: expected handler to be a plain object but received ${typeof definition.handler}`);
+
+        //     for (const handler of definition.handlers) {
+        //         // TODO: add handler registration
+        //     }
+
+        //     for (const storeName of storeNames) {
+        //         // TODO: add storeName/queue handling
+        //     }
+
+        //     // TODO: Add handler handling
+        // }
     }
 
     #resetTransactionState() {
@@ -109,7 +133,7 @@ export class Database {
     }
 
     queueTransaction(storeNames, mode, handlers, options) {
-        
+
     }
 
     onTransactionEnd() {
