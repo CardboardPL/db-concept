@@ -18,10 +18,10 @@ export function initializeTaskManagerSchema(db) {
         nextCategoryId,
     */
     const taskCategoryLinksStore = db.createObjectStore('taskCategoryLinks', { keyPath: 'categoryId' });
-    taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: true });
-    taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
-    taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { unique: true });
-    taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
+    taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: false });
+    taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: false });
+    taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { unique: false });
+    taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: false });
     
     /* Projects Schema
         projectId,
@@ -41,10 +41,9 @@ export function initializeTaskManagerSchema(db) {
         tailTaskId,
     */
     const taskProjectsLinksStore = db.createObjectStore('taskProjectsLinks', { keyPath: 'projectId' });
-    taskProjectsLinksStore.createIndex('projectId', 'projectId', { unique: true });
     taskProjectsLinksStore.createIndex('categoryId', 'categoryId', { unique: false });
-    taskProjectsLinksStore.createIndex('headTaskId', 'headTaskId', { unique: true });
-    taskProjectsLinksStore.createIndex('tailTaskId', 'tailTaskId', { unique: true });
+    taskProjectsLinksStore.createIndex('headTaskId', 'headTaskId', { unique: false });
+    taskProjectsLinksStore.createIndex('tailTaskId', 'tailTaskId', { unique: false });
 
     /* Tasks Schema
         taskId,
@@ -74,10 +73,10 @@ export function initializeTaskManagerSchema(db) {
     const taskLinksStore = db.createObjectStore('taskLinks', { keyPath: 'taskId' });
     taskLinksStore.createIndex('parentTaskId', 'parentTaskId', { unique: false });
     taskLinksStore.createIndex('parentProjectId', 'parentProjectId', { unique: false });
-    taskLinksStore.createIndex('prevTaskId', 'prevTaskId', { unique: true });
-    taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: true });
-    taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: true });
-    taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: true });
+    taskLinksStore.createIndex('prevTaskId', 'prevTaskId', { unique: false });
+    taskLinksStore.createIndex('nextTaskId', 'nextTaskId', { unique: false });
+    taskLinksStore.createIndex('headSubTaskId', 'headSubTaskId', { unique: false });
+    taskLinksStore.createIndex('tailSubTaskId', 'tailSubTaskId', { unique: false });
 
     /* TaskTags Schema
         tagId,
@@ -92,6 +91,6 @@ export function initializeTaskManagerSchema(db) {
         tagId,
         taskId,
     */
-    const taskTagLinksStore = db.createObjectStore('taskTagLinks', { keyPath: 'tagId' });
+    const taskTagLinksStore = db.createObjectStore('taskTagLinks', { keyPath: ['taskId', 'tagId'] });
     taskTagLinksStore.createIndex('taskId', 'taskId', { unique: false });
 }
