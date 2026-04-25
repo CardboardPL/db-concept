@@ -93,5 +93,5 @@ export function initializeTaskManagerSchema(db) {
         taskId,
     */
     const taskTagLinksStore = db.createObjectStore('taskTagLinks', { keyPath: 'tagId' });
-    taskTagLinksStore.createIndex('taskId', 'taskId', { unique: true });
+    taskTagLinksStore.createIndex('taskId', 'taskId', { unique: false });
 }
