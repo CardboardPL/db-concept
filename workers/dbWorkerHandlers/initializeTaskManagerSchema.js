@@ -20,7 +20,7 @@ export function initializeTaskManagerSchema(db) {
     const taskCategoryLinksStore = db.createObjectStore('taskCategoryLinks', { keyPath: 'categoryId' });
     taskCategoryLinksStore.createIndex('headProjectId', 'headProjectId', { unique: true });
     taskCategoryLinksStore.createIndex('tailProjectId', 'tailProjectId', { unique: true });
-    taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { uniqe: true });
+    taskCategoryLinksStore.createIndex('prevCategoryId', 'prevCategoryId', { unique: true });
     taskCategoryLinksStore.createIndex('nextCategoryId', 'nextCategoryId', { unique: true });
     
     /* Projects Schema
