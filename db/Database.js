@@ -48,11 +48,11 @@ export class Database {
     }
 
     #processConfigHandlers(type, handlers) {
-        const necessaryHandlerNames = ['onabort', 'onerror', 'oncomplete'];
+        const necessaryHandlerNames = ['handler', 'onabort', 'onerror', 'oncomplete'];
 
         for (const name of necessaryHandlerNames) {
             const handler = handlers[name];
-            if (handler == null) continue;
+            if (name !== 'handler' && handler == null) continue;
             if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
             
             // TODO: add handler registration here
