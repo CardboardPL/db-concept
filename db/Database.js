@@ -11,6 +11,13 @@ export class Database {
         active: false,
         instance: null
     };
+    #transactionRegistry = {
+        config: {
+            queues: new Map(),
+            data: new Map()
+        },
+        ongoingTransactions: new Map()
+    }
     #deleting = false;
     #versionChanged = false;
     #name;
