@@ -16,29 +16,29 @@ export class Database {
     #name;
     #version;
 
-    constructor(name, transactionDefinitions) {
+    constructor(name, transactionConfigs) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         this.#name = name;
 
-        if (transactionDefinitions == null) return;
-        if (!Array.isArray(transactionDefinitions)) throw new Error(`Failed to initialize DB: expected transactionDefinitions to be an array but received "${typeof transactionDefinitions}"`);
-        this.#validateTransactionDefinitions(transactionDefinitions);
+        if (transactionConfigs == null) return;
+        if (!Array.isArray(transactionConfigs)) throw new Error(`Failed to initialize DB: expected transactionConfigs to be an array but received "${typeof transactionConfigs}"`);
+        this.#setupTransactionConfigs(transactionConfigs);
     }
 
-    #validateTransactionDefinitions(definitions) {
-        for (const definition of definitions) {
-            if (!isPlainObject(definition)) throw new Error(`Failed to initialize DB: expected a transaction definition to be a plain object but received ${typeof definition}`);
+    #setupTransactionConfigs(configs) {
+        for (const config of configs) {
+            if (!isPlainObject(config)) throw new Error(`Expected transactionConfig to be a plain object but received "${typeof config}"`);
             
-            let type = typeof definition.type === 'string' ? definition.type.trim() : null;
-            if (!type) throw new Error(`Failed to initialize DB: expected transaction type to be a non-empty string but received ${definition.type}`);
-            if (!['readonly', 'readwrite'].includes(definition.mode)) throw new Error(`Failed to initialie DB: expected mode to either be "readonly" or "readwrite" but received "${definition.mode}"`);
+            let type = typeof config.type === 'string' ? config.type.trim() : null;
+            if (!type) throw new Error(`Expected transaction type to be a non-empty string`);
+            if (!['readonly', 'readwrite'].includes(config.mode)) throw new Error(`Expected transaction mode to either be "readonly" or "readwrite" but received "${config.mode}"`);
 
-            const storeNames = definition.reliesOn;
-            if (!Array.isArray(storeNames)) throw new Error(`Failed to initialize DB: expected reliesOn to be an array but received ${typeof storeNames}`);
+            const storeNames = config.reliesOn;
+            if (!Array.isArray(storeNames)) throw new Error(`Expected reliesOn to be an array but received ${typeof storeNames}`);
 
-            if (!isPlainObject(definition.handlers)) throw new Error(`Failed to initialize DB: expected handler to be a plain object but received ${typeof definition.handler}`);
+            if (!isPlainObject(config.handlers)) throw new Error(`Transaction handlers must be a plain object (e.g., { name: func }) but received: ${typeof config.handlers}`);
 
-            for (const handler of definition.handlers) {
+            for (const handler of config.handlers) {
                 // TODO: add handler registration
             }
 
