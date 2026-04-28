@@ -22,7 +22,11 @@ export class Database {
 
         if (transactionDefinitions == null) return;
         if (!Array.isArray(transactionDefinitions)) throw new Error(`Failed to initialize DB: expected transactionDefinitions to be an array but received "${typeof transactionDefinitions}"`);
-        for (const definition of transactionDefinitions) {
+        this.#validateTransactionDefinitions(transactionDefinitions);
+    }
+
+    #validateTransactionDefinitions(definitions) {
+        for (const definition of definitions) {
             if (!isPlainObject(definition)) throw new Error(`Failed to initialize DB: expected a transaction definition to be a plain object but received ${typeof definition}`);
             
             let type = typeof definition.type === 'string' ? definition.type.trim() : null;
