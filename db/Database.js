@@ -62,7 +62,16 @@ export class Database {
             if (name !== 'handler' && handler == null) continue;
             if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
             
-            // TODO: add handler registration here
+            // Handler Registration
+            const typeObj = this.#transactionRegistry.config.data.get(type);
+
+            // TODO: Add Defensive checks here if necessary
+
+            if (!isPlainObject(typeObj.handlers)) {
+                typeObj.handlers = {};
+            }
+
+            typeObj.handlers[name] = handler;
         }
     }
 
