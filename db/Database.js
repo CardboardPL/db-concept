@@ -37,16 +37,25 @@ export class Database {
             if (!Array.isArray(storeNames)) throw new Error(`Expected reliesOn to be an array but received ${typeof storeNames}`);
 
             if (!isPlainObject(config.handlers)) throw new Error(`Transaction handlers must be a plain object (e.g., { name: func }) but received: ${typeof config.handlers}`);
-
-            for (const handler of config.handlers) {
-                // TODO: add handler registration
-            }
+            this.#processConfigHandlers(type, config.handlers);
 
             for (const storeName of storeNames) {
                 // TODO: add storeName/queue handling
             }
 
             // TODO: Add handler handling
+        }
+    }
+
+    #processConfigHandlers(type, handlers) {
+        const necessaryHandlerNames = ['onabort', 'onerror', 'oncomplete'];
+
+        for (const name of necessaryHandlerNames) {
+            const handler = handlers[name];
+            if (handler == null) continue;
+            if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
+            
+            // TODO: add handler registration here
         }
     }
 
