@@ -10,6 +10,7 @@ export class Database {
         active: false,
         instance: null
     };
+    // TODO: Redo queue storage (make it into a subscription model)
     #transactionRegistry = {
         config: {
             queues: new Map(),
@@ -37,20 +38,51 @@ export class Database {
             
             let type = typeof config.type === 'string' ? config.type.trim() : null;
             if (!type) throw new Error(`Expected transaction type to be a non-empty string`);
+            type = type.toUpperCase();
+
             if (!['readonly', 'readwrite'].includes(config.mode)) throw new Error(`Expected transaction mode to either be "readonly" or "readwrite" but received "${config.mode}"`);
 
             const storeNames = config.reliesOn;
             if (!Array.isArray(storeNames)) throw new Error(`Expected reliesOn to be an array but received ${typeof storeNames}`);
 
             if (!isPlainObject(config.handlers)) throw new Error(`Transaction handlers must be a plain object (e.g., { name: func }) but received: ${typeof config.handlers}`);
-            this.#processConfigHandlers(type, config.handlers);
 
-            for (const storeName of storeNames) {
-                // TODO: add storeName/queue handling
+            if (!this.#transactionRegistry.config.data) {
+                this.#transactionRegistry.config.data = new Map();
             }
+            this.#transactionRegistry.config.data.set(type, {
+                mode: config.mode
+            });
 
-            // TODO: Add handler handling
+            this.#processConfigStoreNames(type, storeNames);
+            this.#processConfigHandlers(type, config.handlers);
         }
+    }
+
+    #processConfigStoreNames(type, storeNames) {
+        const queues = new Set();
+        const names = [];
+        for (let name of storeNames) {
+            if (typeof name !== 'string') throw new Error(`Transaction "${type}" store name "${name}" must be a string`);
+            name = name.trim().toUpperCase();
+            if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
+
+            // Identify overlapping stores
+            const existingQueue = this.#transactionRegistry.config.queues.get(name);
+            if (existingQueue && !queues.has(existingQueue)) {
+                queues.add(existingQueue);
+            } else {
+                names.push(name);
+            }
+        }
+
+        if (queues.size === 0) {
+            queues.add(new Queue());
+        }
+
+        // TODO: Find all storeNames using queues in the set and merge them here
+
+        // TOOD: Assign the queues to the storeNames here
     }
 
     #processConfigHandlers(type, handlers) {
