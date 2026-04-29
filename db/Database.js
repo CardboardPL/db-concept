@@ -6,7 +6,6 @@ export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
-    #transactionQueue = new Queue();
     #transaction = {
         active: false,
         instance: null
@@ -17,7 +16,7 @@ export class Database {
             data: new Map()
         },
         ongoingTransactions: new Map()
-    }
+    };
     #deleting = false;
     #versionChanged = false;
     #name;
