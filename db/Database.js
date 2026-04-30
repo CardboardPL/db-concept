@@ -23,13 +23,19 @@ export class Database {
     #name;
     #version;
 
-    constructor(name, transactionConfigs) {
+    constructor(name, transactionConfigs, storeConfig) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         this.#name = name;
 
-        if (transactionConfigs == null) return;
-        if (!Array.isArray(transactionConfigs)) throw new Error(`Failed to initialize DB: expected transactionConfigs to be an array but received "${typeof transactionConfigs}"`);
-        this.#setupTransactionConfigs(transactionConfigs);
+        if (transactionConfigs != null) {
+            if (!Array.isArray(transactionConfigs)) throw new Error(`Failed to initialize DB: expected transactionConfigs to be an array but received "${typeof transactionConfigs}"`);
+            this.#setupTransactionConfigs(transactionConfigs);
+        }
+        
+        if (storeConfig != null) {
+            if (!isPlainObject(storeConfig)) throw new Error(`Failed to initialize DB: storeConfig must be a plain object but received: ${typeof storeConfig}`); 
+            // TODO: add storeConfig handling here
+        }
     }
 
     #setupTransactionConfigs(configs) {
