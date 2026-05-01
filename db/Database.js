@@ -70,29 +70,17 @@ export class Database {
     }
 
     #processConfigStoreNames(type, storeNames) {
-        const queues = new Set();
-        const names = [];
         for (let name of storeNames) {
             if (typeof name !== 'string') throw new Error(`Transaction "${type}" store name "${name}" must be a string`);
             name = name.trim().toUpperCase();
             if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
 
-            // Identify overlapping stores
-            const existingQueue = this.#transactionRegistry.config.queues.get(name);
-            if (existingQueue && !queues.has(existingQueue)) {
-                queues.add(existingQueue);
-            } else {
-                names.push(name);
+            // Create queues for stores without them
+            const queues = this.#transactionRegistry.config.queues;
+            if (!queues.get(name)) {
+                queues.set(name, new Queue());
             }
         }
-
-        if (queues.size === 0) {
-            queues.add(new Queue());
-        }
-
-        // TODO: Find all storeNames using queues in the set and merge them here
-
-        // TOOD: Assign the queues to the storeNames here
     }
 
     #processConfigHandlers(type, handlers) {
