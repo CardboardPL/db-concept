@@ -64,12 +64,12 @@ export class Database {
                 mode: config.mode
             });
 
-            this.#processConfigStoreNames(type, storeNames);
-            this.#processConfigHandlers(type, config.handlers);
+            this.#processTransactionConfigStoreNames(type, storeNames);
+            this.#processTransactionConfigHandlers(type, config.handlers);
         }
     }
 
-    #processConfigStoreNames(type, storeNames) {
+    #processTransactionConfigStoreNames(type, storeNames) {
         for (let name of storeNames) {
             if (typeof name !== 'string') throw new Error(`Transaction "${type}" store name "${name}" must be a string`);
             name = name.trim().toUpperCase();
@@ -83,7 +83,7 @@ export class Database {
         }
     }
 
-    #processConfigHandlers(type, handlers) {
+    #processTransactionConfigHandlers(type, handlers) {
         const necessaryHandlerNames = ['handler', 'onabort', 'onerror', 'oncomplete'];
 
         for (const name of necessaryHandlerNames) {
@@ -93,13 +93,9 @@ export class Database {
             
             // Handler Registration
             const typeObj = this.#transactionRegistry.config.data.get(type);
-
-            // TODO: Add Defensive checks here if necessary
-
             if (!isPlainObject(typeObj.handlers)) {
                 typeObj.handlers = {};
             }
-
             typeObj.handlers[name] = handler;
         }
     }
