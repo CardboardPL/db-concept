@@ -23,10 +23,14 @@ export class Database {
     #name;
     #version;
 
-    constructor(name, transactionConfigs, storeConfig) {
+    constructor(name, options) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         this.#name = name;
 
+        if (options == null) return;
+        if (!isPlainObject(options)) throw new Error(`Failed to initialize DB: expected options to be a plain object but received "${typeof options}`);
+
+        const { storeConfig, transactionConfigs } = options;
         if (storeConfig != null) {
             if (!isPlainObject(storeConfig)) throw new Error(`Failed to initialize DB: storeConfig must be a plain object but received: ${typeof storeConfig}`); 
             // TODO: add storeConfig handling here
