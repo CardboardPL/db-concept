@@ -80,6 +80,12 @@ export class Database {
             if (!queues.get(name)) {
                 queues.set(name, new Queue());
             }
+
+            const typeEntry = this.#transactionRegistry.config.data.get(type);
+            if (!typeEntry.reliesOn) {
+                typeEntry.reliesOn = [];
+            }
+            typeEntry.reliesOn.push(name);
         }
     }
 
