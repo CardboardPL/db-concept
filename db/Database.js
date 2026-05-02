@@ -35,14 +35,14 @@ export class Database {
             if (!isPlainObject(storeConfig)) throw new Error(`Failed to initialize DB: storeConfig must be a plain object but received: ${typeof storeConfig}`); 
             // TODO: add storeConfig handling here
         }
-
-        if (transactionConfigs != null) {
-            if (!Array.isArray(transactionConfigs)) throw new Error(`Failed to initialize DB: expected transactionConfigs to be an array but received "${typeof transactionConfigs}"`);
-            this.#setupTransactionConfigs(transactionConfigs);
-        }
+            
+        this.#setupTransactionConfigs(transactionConfigs);
     }
 
     #setupTransactionConfigs(configs) {
+        if (configs == null) return;
+        if (!Array.isArray(configs)) throw new Error(`Expected transactionConfigs to be an array but received "${typeof configs}"`);
+
         for (const config of configs) {
             if (!isPlainObject(config)) throw new Error(`Expected transactionConfig to be a plain object but received "${typeof config}"`);
             
