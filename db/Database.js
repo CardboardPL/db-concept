@@ -6,11 +6,11 @@ export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
+    // TODO: remove #transaction after #transactionRegistry handling is done
     #transaction = {
         active: false,
         instance: null
     };
-    // TODO: Redo queue storage (make it into a subscription model)
     #transactionRegistry = {
         config: {
             queues: new Map(),
@@ -31,12 +31,14 @@ export class Database {
         if (!isPlainObject(options)) throw new Error(`Failed to initialize DB: expected options to be a plain object but received "${typeof options}`);
 
         const { storeConfig, transactionConfigs } = options;
-        if (storeConfig != null) {
-            if (!isPlainObject(storeConfig)) throw new Error(`Failed to initialize DB: storeConfig must be a plain object but received: ${typeof storeConfig}`); 
-            // TODO: add storeConfig handling here
-        }
-            
+        this.#setupStoreConfig(storeConfig);
         this.#setupTransactionConfigs(transactionConfigs);
+    }
+
+    #setupStoreConfig(config) {
+        if (config == null) return;
+        if (!isPlainObject(config)) throw new Error(`Expected storeConfig to be a plain object but received: ${typeof config}`);
+        // TODO: add storeConfig handling here
     }
 
     #setupTransactionConfigs(configs) {
@@ -106,6 +108,7 @@ export class Database {
         }
     }
 
+    // TODO: Assess purpose given the new structure
     #resetTransactionState() {
         this.#transaction.active = false;
         this.#transaction.instance = null;
@@ -193,7 +196,7 @@ export class Database {
         this.#state = 'opened';
     }
 
-    queueTransaction(storeNames, mode, handlers, options) {
+    queueTransaction(type, data) {
 
     }
 
@@ -201,6 +204,7 @@ export class Database {
         
     }
 
+    // TODO: Turn into a private method in the future (to be used with queueTransaction())
     async transaction(storeNames, mode, handlers, options) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
@@ -249,6 +253,7 @@ export class Database {
         }
     }
 
+    // TODO: Assess purpose given the new structure
     abortCurrentTransaction() {
         if (this.#transaction.active !== true) throw new Error('There is no ongoing transaction');
         this.#transaction.instance.abort();
