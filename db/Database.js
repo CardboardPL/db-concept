@@ -38,7 +38,30 @@ export class Database {
     #setupStoreConfig(config) {
         if (config == null) return;
         if (!isPlainObject(config)) throw new Error(`Expected storeConfig to be a plain object but received: ${typeof config}`);
-        // TODO: add storeConfig handling here
+        
+        this.#processStoreGroups(config.storeGroups);
+    }
+
+    #processStoreGroups(groups) {
+        if (groups == null) return;
+        if (!Array.isArray(groups)) throw new Error(`Expected storeConfig.groups to be an array but received: ${typeof groups}`);
+
+        // TODO: Add merging and splitting capabilities (aka handling for storeNames that already have a queue)
+        const seen = new Set();
+        for (const group of group) {
+            if (!Array.isArray(group)) throw new Error(`Expected a group of storeConfig.groups to be an array but received: ${typeof group}`);
+
+            // Deprecate when implementing the TODO on top of this
+            const commonQueue = new Queue();
+            for (let storeName of group) {
+                if (typeof storeName !== 'string') throw new Error(`Expected storeName to be a string but received: ${typeof storeName}`);
+                storeName = storeName.trim().toUpperCase();
+                if (!storeName) throw new Error('Expected storeName to be a non-empty string');
+                if (seen.has(storeName)) throw new Error('Overlapping storeNames are not allowed between groups');
+                this.#transactionRegistry.config.queues.set(storeName, commonQueue);
+                seen.add(storeName);
+            }
+        }
     }
 
     #setupTransactionConfigs(configs) {
