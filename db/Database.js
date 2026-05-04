@@ -42,24 +42,56 @@ export class Database {
         this.#processStoreGroups(config.storeGroups);
     }
 
-    #processStoreGroups(groups) {
+    #processStoreGroups(groups, stopOnSameQueues = false) {
         if (groups == null) return;
         if (!Array.isArray(groups)) throw new Error(`Expected storeConfig.groups to be an array but received: ${typeof groups}`);
 
-        // TODO: Add merging and splitting capabilities (aka handling for storeNames that already have a queue)
         const seen = new Set();
-        for (const group of group) {
+        for (const group of groups) {
             if (!Array.isArray(group)) throw new Error(`Expected a group of storeConfig.groups to be an array but received: ${typeof group}`);
 
-            // Deprecate when implementing the TODO on top of this
-            const commonQueue = new Queue();
+            // Find all necessary queues
+            const queues = this.#transactionRegistry.config.queues;
+            const formattedStoreNames = [];
+            const necessaryQueues = new Set();
             for (let storeName of group) {
                 if (typeof storeName !== 'string') throw new Error(`Expected storeName to be a string but received: ${typeof storeName}`);
                 storeName = storeName.trim().toUpperCase();
                 if (!storeName) throw new Error('Expected storeName to be a non-empty string');
                 if (seen.has(storeName)) throw new Error('Overlapping storeNames are not allowed between groups');
-                this.#transactionRegistry.config.queues.set(storeName, commonQueue);
-                seen.add(storeName);
+
+                const registeredQueue = queues.get(storeName);
+                if (registeredQueue) {
+                    necessaryQueues.add(registeredQueue);
+                }
+                formattedStoreNames.push(storeName);
+            }
+
+            const necessaryQueuesAmount = necessaryQueues.size;
+            if (stopOnSameQueues && necessaryQueuesAmount) continue;
+
+            let newQueue;
+            if (necessaryQueuesAmount === 0) {
+                newQueue = new Queue();
+            } else {
+                const promises = [];
+                for (const queue of necessaryQueues) {
+                    let currResolve;
+                    promises.push(new Promise((resolve) => {
+                        currResolve = resolve;
+                    }));
+                    queue.enqueue(async () => {
+                        currResolve();
+                    });
+                }
+
+                newQueue = new Queue().enqueue(async () => {
+                    await Promise.all(promises);
+                });
+            }
+             
+            for (const storeName of formattedStoreNames) {
+                queues.set(storeName, newQueue);
             }
         }
     }
