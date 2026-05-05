@@ -4,6 +4,7 @@ import { Queue } from "../data-structures/Queue.js";
 
 export class Database {
     #db;
+    #eventTarget = new EventTarget();
     #state = 'closed';
     #upgradeStatus = 'upgraded';
     // TODO: remove #transaction after #transactionRegistry handling is done
