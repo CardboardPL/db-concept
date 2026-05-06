@@ -253,7 +253,50 @@ export class Database {
     }
 
     queueTransaction(type, data) {
+        const typeObj = this.#transactionRegistry.config.data.get(type);
+        if (!typeObj) throw new Error(`Passed in a non-existent type: ${type}`);
 
+        // get necessary queues for the transaction
+        const necessaryQueues = new Set();
+        for (const storeName of typeObj.reliesOn) {
+            const queue = this.#transactionRegistry.config.queues.get(storeName);
+            if (necessaryQueues.has(queue)) continue;
+            necessaryQueues.add(queue);
+        }
+
+        // queue transaction
+        const promises = [];
+        const resolves = [];
+        for (const queue of necessaryQueues) {
+            let currResolve;
+            promises.push(new Promise((resolve) => {
+                currResolve = resolve;
+            }));
+            queue.enqueue(async () => {
+                currResolve();
+
+                await new Promise((resolve) => {
+                    resolves.push(resolve);
+                });
+
+                this.#eventTarget.dispatchEvent(new CustomEvent('taskComplete', {
+                    detail: queue
+                }));
+            });
+        }
+
+        (async () => {
+            await Promise.all(promises);
+            await this.transaction(typeObj.reliesOn, typeObj.mode, typeObj.handlers, data);
+
+            for (const resolve of resolves) {
+                resolve();
+            }
+        })();
+
+        this.#eventTarget.dispatchEvent(new CustomEvent('taskAdded', {
+            detail: necessaryQueues
+        }));
     }
 
     onTransactionEnd() {
@@ -261,6 +304,7 @@ export class Database {
     }
 
     // TODO: Turn into a private method in the future (to be used with queueTransaction())
+    // TODO PRIMARY: REDO method to accept data for the transaction handler
     async transaction(storeNames, mode, handlers, options) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
