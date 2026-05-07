@@ -277,7 +277,11 @@ export class Database {
 
         (async () => {
             await Promise.all(promises);
-            await this.transaction(typeObj.reliesOn, typeObj.mode, typeObj.handlers, data);
+            await this.#transaction({
+                storeNames: typeObj.reliesOn,
+                mode: typeObj.mode,
+                handlers: typeObj.handlers
+            }, data);
 
             for (const resolve of resolves) {
                 resolve();
