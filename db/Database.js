@@ -305,16 +305,17 @@ export class Database {
 
     // TODO: Turn into a private method in the future (to be used with queueTransaction())
     // TODO PRIMARY: REDO method to accept data for the transaction handler
-    async transaction(storeNames, mode, handlers, options) {
+    async transaction(config, data) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
         if (this.#transaction.active === true) throw new Error('A transaction is in progress');
-        if (!isPlainObject(handlers)) throw new Error('Must pass a valid handler object');
+        if (!isPlainObject(config)) throw new Error('Must pass a valid config object');
 
+        const { storeNames, mode, handlers, options } = config;
         try {
             await new Promise((resolve, reject) => {
-                const transactionHandler = handlers.transactionHandler;
-                if (typeof transactionHandler !== 'function') throw new Error(`Expected transactionHandler to be a function but received ${typeof transactionHandler}`);
+                const handler = handlers.handler;
+                if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof transactionHandler}`);
 
                 const transaction = this.#db.transaction(storeNames, mode, options);
                 this.#transaction.active = true;
@@ -345,7 +346,7 @@ export class Database {
                     resolve();
                 }
 
-                transactionHandler(transaction);
+                handler(transaction, data);
             });
         } catch(err) {
             this.#resetTransactionState();
