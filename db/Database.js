@@ -7,11 +7,6 @@ export class Database {
     #eventTarget = new EventTarget();
     #state = 'closed';
     #upgradeStatus = 'upgraded';
-    // TODO: remove #transaction after #transactionRegistry handling is done
-    #transaction = {
-        active: false,
-        instance: null
-    };
     #transactionRegistry = {
         config: {
             queues: new Map(),
@@ -164,11 +159,6 @@ export class Database {
         }
     }
 
-    // TODO: Assess purpose given the new structure
-    #resetTransactionState() {
-        this.#transaction.active = false;
-        this.#transaction.instance = null;
-    }
 
     #decideVersionToUse() {
         let versionToUse;
@@ -303,12 +293,9 @@ export class Database {
         
     }
 
-    // TODO: Turn into a private method in the future (to be used with queueTransaction())
-    // TODO PRIMARY: REDO method to accept data for the transaction handler
-    async transaction(config, data) {
+    async #transaction(config, data) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
-        if (this.#transaction.active === true) throw new Error('A transaction is in progress');
         if (!isPlainObject(config)) throw new Error('Must pass a valid config object');
 
         const { storeNames, mode, handlers, options } = config;
@@ -318,15 +305,12 @@ export class Database {
                 if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof transactionHandler}`);
 
                 const transaction = this.#db.transaction(storeNames, mode, options);
-                this.#transaction.active = true;
-                this.#transaction.instance = transaction;
                 const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
 
                 transaction.onabort = (event) => {
                     if (typeof onAbortHandler === 'function') {
                         onAbortHandler(event);
                     }
-                    this.#resetTransactionState();
                     resolve();
                 }
 
@@ -342,23 +326,14 @@ export class Database {
                     if (typeof onCompleteHandler === 'function') {
                         onCompleteHandler(event);
                     }
-                    this.#resetTransactionState();
                     resolve();
                 }
 
                 handler(transaction, data);
             });
         } catch(err) {
-            this.#resetTransactionState();
             throw new DatabaseError('An error occured while performing a transaction', err);
         }
-    }
-
-    // TODO: Assess purpose given the new structure
-    abortCurrentTransaction() {
-        if (this.#transaction.active !== true) throw new Error('There is no ongoing transaction');
-        this.#transaction.instance.abort();
-        this.#resetTransactionState();
     }
 
     async upgrade(handlers, attemptCap) {
