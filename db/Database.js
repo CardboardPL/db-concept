@@ -12,7 +12,7 @@ export class Database {
             queues: new Map(),
             data: new Map()
         },
-        ongoingTransactions: new Map()
+        transactions: new Map()
     };
     #deleting = false;
     #versionChanged = false;
