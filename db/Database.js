@@ -288,9 +288,17 @@ export class Database {
             }
         })();
 
+        const transactionId = crypto.randomUUID();
+        this.#transactionRegistry.transactions.set(transactionId, {
+            data,
+            aborted: false,
+            transactionInstance: null
+        });
         this.#eventTarget.dispatchEvent(new CustomEvent('taskAdded', {
             detail: necessaryQueues
         }));
+
+        return transactionId;
     }
 
     onTransactionEnd() {
