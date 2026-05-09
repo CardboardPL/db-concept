@@ -149,7 +149,8 @@ export class Database {
             const handler = handlers[name];
             if (name !== 'handler' && handler == null) continue;
             if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
-            
+            if (handler.constructor.name === 'AsyncFunction') throw new Error(`Transaction "${type}" handler "${name}" must be a normal function, but received an "AsyncFunction"`);
+
             // Handler Registration
             const typeObj = this.#transactionRegistry.config.data.get(type);
             if (!isPlainObject(typeObj.handlers)) {
