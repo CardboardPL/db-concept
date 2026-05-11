@@ -29,6 +29,17 @@ export class Database {
         const { storeConfig, transactionConfigs } = options;
         this.#setupStoreConfig(storeConfig);
         this.#setupTransactionConfigs(transactionConfigs);
+
+        this.#eventTarget.addEventListener('taskAdded', this.#handleTaskAdded);
+        this.#eventTarget.addEventListener('taskComplete', this.#handleTaskComplete)
+    }
+
+    #handleTaskAdded(e) {
+        
+    }
+
+    #handleTaskComplete(e) {
+
     }
 
     #setupStoreConfig(config) {
