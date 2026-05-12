@@ -265,6 +265,7 @@ export class Database {
         }
 
         // queue transaction
+        const transactionId = crypto.randomUUID();
         const promises = [];
         const resolves = [];
         for (const queue of necessaryQueues) {
@@ -280,7 +281,10 @@ export class Database {
                 });
 
                 this.#eventTarget.dispatchEvent(new CustomEvent('taskComplete', {
-                    detail: queue
+                    detail: {
+                        queue,
+                        transactionId
+                    }
                 }));
             });
         }
@@ -298,7 +302,6 @@ export class Database {
             }
         })();
 
-        const transactionId = crypto.randomUUID();
         this.#transactionRegistry.transactions.set(transactionId, {
             data,
             aborted: false,
