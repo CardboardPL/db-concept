@@ -362,7 +362,6 @@ export class Database {
         if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
-        if (this.#transaction.active === true) throw new Error('Cannot upgrade the database while a transaction is ongoing');
         if (Number.isNaN(attemptCap)) {
             attemptCap = null;
         }
@@ -386,7 +385,6 @@ export class Database {
     async delete(handlers, options) {
         if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
-        if (this.#transaction.active === true) throw new Error('Cannot delete the database while a transaction is ongoing');
         if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
         this.#deleting = true
         if (this.#state !== 'closed') this.close();
@@ -418,7 +416,6 @@ export class Database {
     close() {
         if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
-        if (this.#transaction.active === true) throw new Error('Cannot close the database while a transaction is ongoing');
         this.#state = 'closed';
         this.#db.close();
     }
