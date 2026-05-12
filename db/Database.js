@@ -8,12 +8,12 @@ export class Database {
     #state = 'closed';
     #upgradeStatus = 'upgraded';
     #transactionRegistry = {
-        // TODO: PHASE OUT "config" object and move "queues" to a dedicated registry property
-        config: {
-            queues: new Map(),
-        },
         transactions: new Map(),
         configs: new Map()
+    };
+    #queueRegistry = {
+        storeToQueueMap: new Map(),
+        queueMetadata: new Map()
     };
     #deleting = false;
     #versionChanged = false;
@@ -59,7 +59,7 @@ export class Database {
             if (!Array.isArray(group)) throw new Error(`Expected a group of storeConfig.groups to be an array but received: ${typeof group}`);
 
             // Find all necessary queues
-            const queues = this.#transactionRegistry.config.queues;
+            const storeToQueueMap = this.#queueRegistry.storeToQueueMap;
             const formattedStoreNames = [];
             const necessaryQueues = new Set();
             for (let storeName of group) {
@@ -68,7 +68,7 @@ export class Database {
                 if (!storeName) throw new Error('Expected storeName to be a non-empty string');
                 if (seen.has(storeName)) throw new Error('Overlapping storeNames are not allowed between groups');
 
-                const registeredQueue = queues.get(storeName);
+                const registeredQueue = storeToQueueMap.get(storeName);
                 if (registeredQueue) {
                     necessaryQueues.add(registeredQueue);
                 }
@@ -99,7 +99,7 @@ export class Database {
             }
              
             for (const storeName of formattedStoreNames) {
-                queues.set(storeName, newQueue);
+                storeToQueueMap.set(storeName, newQueue);
             }
         }
     }
@@ -138,9 +138,9 @@ export class Database {
             if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
 
             // Create queues for stores without them
-            const queues = this.#transactionRegistry.config.queues;
-            if (!queues.get(name)) {
-                queues.set(name, new Queue());
+            const storeToQueueMap = this.#queueRegistry.storeToQueueMap;
+            if (!storeToQueueMap.get(name)) {
+                storeToQueueMap.set(name, new Queue());
             }
 
             const typeEntry = this.#transactionRegistry.configs.get(type);
@@ -259,7 +259,7 @@ export class Database {
         // get necessary queues for the transaction
         const necessaryQueues = new Set();
         for (const storeName of typeObj.reliesOn) {
-            const queue = this.#transactionRegistry.config.queues.get(storeName);
+            const queue = this.#queueRegistry.storeToQueueMap.get(storeName);
             if (necessaryQueues.has(queue)) continue;
             necessaryQueues.add(queue);
         }
