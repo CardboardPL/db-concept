@@ -8,11 +8,12 @@ export class Database {
     #state = 'closed';
     #upgradeStatus = 'upgraded';
     #transactionRegistry = {
+        // TODO: PHASE OUT "config" object and move "queues" to a dedicated registry property
         config: {
             queues: new Map(),
-            data: new Map()
         },
-        transactions: new Map()
+        transactions: new Map(),
+        configs: new Map()
     };
     #deleting = false;
     #versionChanged = false;
@@ -121,10 +122,7 @@ export class Database {
 
             if (!isPlainObject(config.handlers)) throw new Error(`Transaction handlers must be a plain object (e.g., { name: func }) but received: ${typeof config.handlers}`);
 
-            if (!this.#transactionRegistry.config.data) {
-                this.#transactionRegistry.config.data = new Map();
-            }
-            this.#transactionRegistry.config.data.set(type, {
+            this.#transactionRegistry.configs.set(type, {
                 mode: config.mode
             });
 
@@ -145,7 +143,7 @@ export class Database {
                 queues.set(name, new Queue());
             }
 
-            const typeEntry = this.#transactionRegistry.config.data.get(type);
+            const typeEntry = this.#transactionRegistry.configs.get(type);
             if (!typeEntry.reliesOn) {
                 typeEntry.reliesOn = [];
             }
@@ -163,7 +161,7 @@ export class Database {
             if (handler.constructor.name === 'AsyncFunction') throw new Error(`Transaction "${type}" handler "${name}" must be a normal function, but received an "AsyncFunction"`);
 
             // Handler Registration
-            const typeObj = this.#transactionRegistry.config.data.get(type);
+            const typeObj = this.#transactionRegistry.configs.get(type);
             if (!isPlainObject(typeObj.handlers)) {
                 typeObj.handlers = {};
             }
@@ -255,7 +253,7 @@ export class Database {
     }
 
     queueTransaction(type, data) {
-        const typeObj = this.#transactionRegistry.config.data.get(type);
+        const typeObj = this.#transactionRegistry.configs.get(type);
         if (!typeObj) throw new Error(`Passed in a non-existent type: ${type}`);
 
         // get necessary queues for the transaction
