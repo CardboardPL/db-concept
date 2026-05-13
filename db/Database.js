@@ -96,6 +96,9 @@ export class Database {
                 newQueue = new Queue().enqueue(async () => {
                     await Promise.all(promises);
                 });
+                this.#eventTarget.dispatchEvent(new CustomEvent('taskAdded', {
+                    detail: necessaryQueues
+                }));
             }
              
             for (const storeName of formattedStoreNames) {
