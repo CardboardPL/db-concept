@@ -57,6 +57,7 @@ export class Database {
         const seen = new Set();
         for (const group of groups) {
             if (!Array.isArray(group)) throw new Error(`Expected a group of storeConfig.groups to be an array but received: ${typeof group}`);
+            if (group.length === 0) continue;
 
             // Find all necessary queues
             const storeToQueueMap = this.#queueRegistry.storeToQueueMap;
@@ -104,6 +105,11 @@ export class Database {
             for (const storeName of formattedStoreNames) {
                 storeToQueueMap.set(storeName, newQueue);
             }
+
+            this.#queueRegistry.queueMetadata.set(newQueue, {
+                isRunning: false,
+                subscribedStores: new Set(group)
+            });
         }
     }
 
