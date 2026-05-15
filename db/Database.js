@@ -108,7 +108,7 @@ export class Database {
 
             this.#queueRegistry.queueMetadata.set(newQueue, {
                 isRunning: false,
-                subscribedStores: new Set(group)
+                subscribedStores: new Set(formattedStoreNames)
             });
         }
     }
