@@ -65,7 +65,7 @@ export class Database {
             const necessaryQueues = new Set();
             for (let storeName of group) {
                 if (typeof storeName !== 'string') throw new Error(`Expected storeName to be a string but received: ${typeof storeName}`);
-                storeName = storeName.trim().toUpperCase();
+                storeName = storeName.trim();
                 if (!storeName) throw new Error('Expected storeName to be a non-empty string');
                 if (seen.has(storeName)) throw new Error('Overlapping storeNames are not allowed between groups');
 
@@ -122,8 +122,6 @@ export class Database {
             
             let type = typeof config.type === 'string' ? config.type.trim() : null;
             if (!type) throw new Error(`Expected transaction type to be a non-empty string`);
-            type = type.toUpperCase();
-
             if (!['readonly', 'readwrite'].includes(config.mode)) throw new Error(`Expected transaction mode to either be "readonly" or "readwrite" but received "${config.mode}"`);
 
             const storeNames = config.reliesOn;
@@ -143,7 +141,7 @@ export class Database {
     #processTransactionConfigStoreNames(type, storeNames) {
         for (let name of storeNames) {
             if (typeof name !== 'string') throw new Error(`Transaction "${type}" store name "${name}" must be a string`);
-            name = name.trim().toUpperCase();
+            name = name.trim();
             if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
 
             // Create queues for stores without them
