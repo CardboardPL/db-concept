@@ -36,11 +36,33 @@ export class Database {
     }
 
     #handleTaskAdded(e) {
-        
+        const queues = e.detail;
+        for (const queue of queues) {
+            const queueMetadata = this.#queueRegistry.queueMetadata.get(queue);
+            if (queueMetadata.isRunning) continue;
+            const handler = queue.dequeue();
+            handler();
+            queueMetadata.isRunning = true;
+        }
     }
 
     #handleTaskComplete(e) {
+        const { queue, transactionId } = e.detail;
 
+        // Queue Next Item if there are more tasks
+        const hasNextItem = queue.peek();
+        if (hasNextItem) {
+            const handler = queue.dequeue();
+            handler();
+        // Reset Queue State if the queue is empty
+        } else {
+            this.#queueRegistry.queueMetadata.get(queue).isRunning = false;
+        }
+
+        // Remove transaction from the registry
+        if (this.#transactionRegistry.transactions.has(transactionId)) {
+            this.#transactionRegistry.transactions.delete(transactionId);
+        }
     }
 
     #setupStoreConfig(config) {
@@ -50,6 +72,7 @@ export class Database {
         this.#processStoreGroups(config.storeGroups);
     }
 
+    // TODO: Add a way to undo changes (check everything first before updating the registry)
     #processStoreGroups(groups, stopOnSameQueues = false) {
         if (groups == null) return;
         if (!Array.isArray(groups)) throw new Error(`Expected storeConfig.groups to be an array but received: ${typeof groups}`);
@@ -296,6 +319,7 @@ export class Database {
             });
         }
 
+        // TODO: Move to a separate handler and add a try finally block here
         (async () => {
             await Promise.all(promises);
             await this.#transaction({
