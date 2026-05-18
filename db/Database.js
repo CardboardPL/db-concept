@@ -317,15 +317,25 @@ export class Database {
             });
         }
 
-        // TODO: Move to a separate handler and add a try finally block here
+        // TODO: Move to a separate handler
         (async () => {
+            // Wait to acquire all of the locks
             await Promise.all(promises);
-            await this.#transaction({
-                storeNames: typeObj.reliesOn,
-                mode: typeObj.mode,
-                handlers: typeObj.handlers
-            }, data);
+            
+            // Start transaction
+            try {
+                await this.#transaction({
+                    storeNames: typeObj.reliesOn,
+                    mode: typeObj.mode,
+                    handlers: typeObj.handlers
+                }, data);
+            // Show a message regarding the error
+            } catch(err) {
+                // TODO: add a hook to handle transaction failures
+                console.error(`${err.name}: ${err.message}`);
+            }
 
+            // Release all locks
             for (const resolve of resolves) {
                 resolve();
             }
