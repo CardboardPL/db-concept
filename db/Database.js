@@ -60,9 +60,7 @@ export class Database {
         }
 
         // Remove transaction from the registry
-        if (this.#transactionRegistry.transactions.has(transactionId)) {
-            this.#transactionRegistry.transactions.delete(transactionId);
-        }
+        this.#transactionRegistry.transactions.delete(transactionId);
     }
 
     #setupStoreConfig(config) {
