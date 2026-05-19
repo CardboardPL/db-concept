@@ -197,6 +197,28 @@ export class Database {
         }
     }
 
+    async #handleTask(typeObj, promises, resolves) {
+        // Wait to acquire all of the locks
+        await Promise.all(promises);
+        
+        // Start transaction
+        try {
+            await this.#transaction({
+                storeNames: typeObj.reliesOn,
+                mode: typeObj.mode,
+                handlers: typeObj.handlers
+            }, data);
+        // Show a message regarding the error
+        } catch(err) {
+            // TODO: add a hook to handle transaction failures
+            console.error(`${err.name}: ${err.message}`);
+        }
+
+        // Release all locks
+        for (const resolve of resolves) {
+            resolve();
+        }
+    }
 
     #decideVersionToUse() {
         let versionToUse;
@@ -317,29 +339,8 @@ export class Database {
             });
         }
 
-        // TODO: Move to a separate handler
-        (async () => {
-            // Wait to acquire all of the locks
-            await Promise.all(promises);
-            
-            // Start transaction
-            try {
-                await this.#transaction({
-                    storeNames: typeObj.reliesOn,
-                    mode: typeObj.mode,
-                    handlers: typeObj.handlers
-                }, data);
-            // Show a message regarding the error
-            } catch(err) {
-                // TODO: add a hook to handle transaction failures
-                console.error(`${err.name}: ${err.message}`);
-            }
-
-            // Release all locks
-            for (const resolve of resolves) {
-                resolve();
-            }
-        })();
+        // Process Task
+        this.#handleTask(typeObj, promises, resolves);
 
         this.#transactionRegistry.transactions.set(transactionId, {
             data,
