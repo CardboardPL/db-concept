@@ -210,7 +210,7 @@ export class Database {
         }
     }
 
-    async #handleTask(typeObj, promises, resolves) {
+    async #handleTask(typeObj, data, promises, resolves) {
         // Wait to acquire all of the locks
         await Promise.all(promises);
         
@@ -351,7 +351,7 @@ export class Database {
         }
 
         // Process Task
-        this.#handleTask(typeObj, promises, resolves);
+        this.#handleTask(typeObj, data, promises, resolves);
 
         this.#transactionRegistry.transactions.set(transactionId, {
             data,
