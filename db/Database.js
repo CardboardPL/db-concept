@@ -65,8 +65,10 @@ export class Database {
             this.#queueRegistry.queueMetadata.get(queue).isRunning = false;
         }
 
-        // Remove transaction from the registry
-        this.#transactionRegistry.transactions.delete(transactionId);
+        // Remove transaction (if it's a transaction task) from the registry
+        if (this.#transactionRegistry.transactions.has(transactionId)) {
+            this.#transactionRegistry.transactions.delete(transactionId);
+        }
     }
 
     #setupStoreConfig(config) {
@@ -118,12 +120,19 @@ export class Database {
                     }));
                     queue.enqueue(async () => {
                         currResolve();
+                        this.#dispatchEvent('taskComplete', {
+                            queue,
+                        });
                     });
                 }
 
                 newQueue = new Queue().enqueue(async () => {
                     await Promise.all(promises);
+                    this.#dispatchEvent('taskComplete', {
+                        queue: newQueue
+                    });
                 });
+                necessaryQueues.add(newQueue);
                 this.#dispatchEvent('taskAdded', necessaryQueues);
             }
              
