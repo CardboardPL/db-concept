@@ -35,6 +35,12 @@ export class Database {
         this.#eventTarget.addEventListener('taskComplete', this.#handleTaskComplete)
     }
 
+    #dispatchEvent(name, data) {
+        this.#eventTarget.dispatchEvent(new CustomEvent(name, {
+            detail: data
+        }));
+    }
+
     #handleTaskAdded(e) {
         const queues = e.detail;
         for (const queue of queues) {
@@ -118,9 +124,7 @@ export class Database {
                 newQueue = new Queue().enqueue(async () => {
                     await Promise.all(promises);
                 });
-                this.#eventTarget.dispatchEvent(new CustomEvent('taskAdded', {
-                    detail: necessaryQueues
-                }));
+                this.#dispatchEvent('taskAdded', necessaryQueues);
             }
              
             for (const storeName of formattedStoreNames) {
@@ -330,12 +334,10 @@ export class Database {
                     resolves.push(resolve);
                 });
 
-                this.#eventTarget.dispatchEvent(new CustomEvent('taskComplete', {
-                    detail: {
-                        queue,
-                        transactionId
-                    }
-                }));
+                this.#dispatchEvent('taskComplete', {
+                    queue,
+                    transactionId
+                });
             });
         }
 
@@ -347,10 +349,7 @@ export class Database {
             aborted: false,
             transactionInstance: null
         });
-        this.#eventTarget.dispatchEvent(new CustomEvent('taskAdded', {
-            detail: necessaryQueues
-        }));
-
+        this.#dispatchEvent('taskAdded', necessaryQueues);
         return transactionId;
     }
 
