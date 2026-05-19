@@ -211,11 +211,10 @@ export class Database {
     }
 
     async #handleTask(typeObj, data, promises, resolves) {
-        // Wait to acquire all of the locks
-        await Promise.all(promises);
-        
-        // Start transaction
         try {
+            // Wait to acquire all of the locks
+            await Promise.all(promises);
+            // Start transaction
             await this.#transaction({
                 storeNames: typeObj.reliesOn,
                 mode: typeObj.mode,
