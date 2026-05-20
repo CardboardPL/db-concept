@@ -6,80 +6,15 @@ export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
-    #transactionRegistry = {
-        transactions: new Map(),
-        configs: new Map()
-    };
+    #transactionRegistry = new Map();
     #deleting = false;
     #versionChanged = false;
     #name;
     #version;
 
-    constructor(name, options) {
+    constructor(name) {
         if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         this.#name = name;
-
-        if (options == null) return;
-        if (!isPlainObject(options)) throw new Error(`Failed to initialize DB: expected options to be a plain object but received "${typeof options}`);
-
-        const { transactionConfigs } = options;
-        this.#setupTransactionConfigs(transactionConfigs);
-    }
-
-    #setupTransactionConfigs(configs) {
-        if (configs == null) return;
-        if (!Array.isArray(configs)) throw new Error(`Expected transactionConfigs to be an array but received "${typeof configs}"`);
-
-        for (const config of configs) {
-            if (!isPlainObject(config)) throw new Error(`Expected transactionConfig to be a plain object but received "${typeof config}"`);
-            
-            let type = typeof config.type === 'string' ? config.type.trim() : null;
-            if (!type) throw new Error(`Expected transaction type to be a non-empty string`);
-            if (!['readonly', 'readwrite'].includes(config.mode)) throw new Error(`Expected transaction mode to either be "readonly" or "readwrite" but received "${config.mode}"`);
-
-            const storeNames = config.reliesOn;
-            if (!Array.isArray(storeNames)) throw new Error(`Expected reliesOn to be an array but received ${typeof storeNames}`);
-
-            if (!isPlainObject(config.handlers)) throw new Error(`Transaction handlers must be a plain object (e.g., { name: func }) but received: ${typeof config.handlers}`);
-
-            this.#transactionRegistry.configs.set(type, {
-                mode: config.mode
-            });
-
-            this.#processTransactionConfigStoreNames(type, storeNames);
-            this.#processTransactionConfigHandlers(type, config.handlers);
-        }
-    }
-
-    #processTransactionConfigStoreNames(type, storeNames) {
-        for (let name of storeNames) {
-            if (typeof name !== 'string') throw new Error(`Transaction "${type}" store name "${name}" must be a string`);
-            name = name.trim();
-            if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
-
-            const typeEntry = this.#transactionRegistry.configs.get(type);
-            if (!typeEntry.reliesOn) {
-                typeEntry.reliesOn = [];
-            }
-            typeEntry.reliesOn.push(name);
-        }
-    }
-
-    #processTransactionConfigHandlers(type, handlers) {
-        const necessaryHandlerNames = ['handler', 'onabort', 'onerror', 'oncomplete'];
-
-        for (const name of necessaryHandlerNames) {
-            const handler = handlers[name];
-            if (name !== 'handler' && handler == null) continue;
-            if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
-
-            // Handler Registration
-            const typeObj = this.#transactionRegistry.configs.get(type);
-            if (!isPlainObject(typeObj.handlers)) {
-                typeObj.handlers = {};
-            }
-            typeObj.handlers[name] = handler;
-        }
     }
 
     #decideVersionToUse() {
@@ -164,13 +99,10 @@ export class Database {
         this.#state = 'opened';
     }
 
-    async transaction(type, data) {
+    async transaction(storeNames, mode, handlers, data, options) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
-        const config = this.#transactionRegistry.configs.get(type);
-        if (!config || !isPlainObject(config)) throw new Error('Must pass a valid config object');
-
-        const { storeNames, mode, handlers, options } = config;
+        
         try {
             await new Promise((resolve, reject) => {
                 const handler = handlers.handler;
