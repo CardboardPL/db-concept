@@ -4,16 +4,11 @@ import { Queue } from "../data-structures/Queue.js";
 
 export class Database {
     #db;
-    #eventTarget = new EventTarget();
     #state = 'closed';
     #upgradeStatus = 'upgraded';
     #transactionRegistry = {
         transactions: new Map(),
         configs: new Map()
-    };
-    #queueRegistry = {
-        storeToQueueMap: new Map(),
-        queueMetadata: new Map()
     };
     #deleting = false;
     #versionChanged = false;
@@ -27,124 +22,8 @@ export class Database {
         if (options == null) return;
         if (!isPlainObject(options)) throw new Error(`Failed to initialize DB: expected options to be a plain object but received "${typeof options}`);
 
-        const { storeConfig, transactionConfigs } = options;
-        this.#setupStoreConfig(storeConfig);
+        const { transactionConfigs } = options;
         this.#setupTransactionConfigs(transactionConfigs);
-
-        this.#eventTarget.addEventListener('taskAdded', this.#handleTaskAdded);
-        this.#eventTarget.addEventListener('taskComplete', this.#handleTaskComplete)
-    }
-
-    #dispatchEvent(name, data) {
-        this.#eventTarget.dispatchEvent(new CustomEvent(name, {
-            detail: data
-        }));
-    }
-
-    #handleTaskAdded(e) {
-        const queues = e.detail;
-        for (const queue of queues) {
-            const queueMetadata = this.#queueRegistry.queueMetadata.get(queue);
-            if (queueMetadata.isRunning) continue;
-            const handler = queue.dequeue();
-            handler();
-            queueMetadata.isRunning = true;
-        }
-    }
-
-    #handleTaskComplete(e) {
-        const { queue, transactionId } = e.detail;
-
-        // Queue Next Item if there are more tasks
-        const hasNextItem = queue.peek();
-        if (hasNextItem) {
-            const handler = queue.dequeue();
-            handler();
-        // Reset Queue State if the queue is empty
-        } else {
-            this.#queueRegistry.queueMetadata.get(queue).isRunning = false;
-        }
-
-        // Remove transaction (if it's a transaction task) from the registry
-        if (this.#transactionRegistry.transactions.has(transactionId)) {
-            this.#transactionRegistry.transactions.delete(transactionId);
-        }
-    }
-
-    #setupStoreConfig(config) {
-        if (config == null) return;
-        if (!isPlainObject(config)) throw new Error(`Expected storeConfig to be a plain object but received: ${typeof config}`);
-        
-        this.#processStoreGroups(config.storeGroups);
-    }
-
-    // TODO: Add a way to undo changes (check everything first before updating the registry)
-    #processStoreGroups(groups, stopOnSameQueues = false) {
-        if (groups == null) return;
-        if (!Array.isArray(groups)) throw new Error(`Expected storeConfig.groups to be an array but received: ${typeof groups}`);
-
-        const seen = new Set();
-        for (const group of groups) {
-            if (!Array.isArray(group)) throw new Error(`Expected a group of storeConfig.groups to be an array but received: ${typeof group}`);
-            if (group.length === 0) continue;
-
-            // Find all necessary queues
-            const storeToQueueMap = this.#queueRegistry.storeToQueueMap;
-            const formattedStoreNames = [];
-            const necessaryQueues = new Set();
-            for (let storeName of group) {
-                if (typeof storeName !== 'string') throw new Error(`Expected storeName to be a string but received: ${typeof storeName}`);
-                storeName = storeName.trim();
-                if (!storeName) throw new Error('Expected storeName to be a non-empty string');
-                if (seen.has(storeName)) throw new Error('Overlapping storeNames are not allowed between groups');
-
-                const registeredQueue = storeToQueueMap.get(storeName);
-                if (registeredQueue) {
-                    necessaryQueues.add(registeredQueue);
-                }
-                formattedStoreNames.push(storeName);
-            }
-
-            const necessaryQueuesAmount = necessaryQueues.size;
-            if (stopOnSameQueues && necessaryQueuesAmount) continue;
-
-            let newQueue;
-            if (necessaryQueuesAmount === 0) {
-                newQueue = new Queue();
-            } else {
-                const promises = [];
-                for (const queue of necessaryQueues) {
-                    let currResolve;
-                    promises.push(new Promise((resolve) => {
-                        currResolve = resolve;
-                    }));
-                    queue.enqueue(async () => {
-                        currResolve();
-                        this.#dispatchEvent('taskComplete', {
-                            queue,
-                        });
-                    });
-                }
-
-                newQueue = new Queue().enqueue(async () => {
-                    await Promise.all(promises);
-                    this.#dispatchEvent('taskComplete', {
-                        queue: newQueue
-                    });
-                });
-                necessaryQueues.add(newQueue);
-                this.#dispatchEvent('taskAdded', necessaryQueues);
-            }
-             
-            for (const storeName of formattedStoreNames) {
-                storeToQueueMap.set(storeName, newQueue);
-            }
-
-            this.#queueRegistry.queueMetadata.set(newQueue, {
-                isRunning: false,
-                subscribedStores: new Set(formattedStoreNames)
-            });
-        }
     }
 
     #setupTransactionConfigs(configs) {
@@ -178,12 +57,6 @@ export class Database {
             name = name.trim();
             if (!name) throw new Error(`Transaction "${type}" store name "${name}" must be a non-empty string`);
 
-            // Create queues for stores without them
-            const storeToQueueMap = this.#queueRegistry.storeToQueueMap;
-            if (!storeToQueueMap.get(name)) {
-                storeToQueueMap.set(name, new Queue());
-            }
-
             const typeEntry = this.#transactionRegistry.configs.get(type);
             if (!typeEntry.reliesOn) {
                 typeEntry.reliesOn = [];
@@ -199,7 +72,6 @@ export class Database {
             const handler = handlers[name];
             if (name !== 'handler' && handler == null) continue;
             if (typeof handler !== 'function') throw new Error(`Transaction "${type}" handler "${name}" must be a function, but received "${typeof handler}"`);
-            if (handler.constructor.name === 'AsyncFunction') throw new Error(`Transaction "${type}" handler "${name}" must be a normal function, but received an "AsyncFunction"`);
 
             // Handler Registration
             const typeObj = this.#transactionRegistry.configs.get(type);
@@ -207,28 +79,6 @@ export class Database {
                 typeObj.handlers = {};
             }
             typeObj.handlers[name] = handler;
-        }
-    }
-
-    async #handleTask(typeObj, data, promises, resolves) {
-        try {
-            // Wait to acquire all of the locks
-            await Promise.all(promises);
-            // Start transaction
-            await this.#transaction({
-                storeNames: typeObj.reliesOn,
-                mode: typeObj.mode,
-                handlers: typeObj.handlers
-            }, data);
-        // Show a message regarding the error
-        } catch(err) {
-            // TODO: add a hook to handle transaction failures
-            console.error(`${err.name}: ${err.message}`);
-        }
-
-        // Release all locks
-        for (const resolve of resolves) {
-            resolve();
         }
     }
 
@@ -314,67 +164,17 @@ export class Database {
         this.#state = 'opened';
     }
 
-    queueTransaction(type, data) {
-        const typeObj = this.#transactionRegistry.configs.get(type);
-        if (!typeObj) throw new Error(`Passed in a non-existent type: ${type}`);
-
-        // get necessary queues for the transaction
-        const necessaryQueues = new Set();
-        for (const storeName of typeObj.reliesOn) {
-            const queue = this.#queueRegistry.storeToQueueMap.get(storeName);
-            if (necessaryQueues.has(queue)) continue;
-            necessaryQueues.add(queue);
-        }
-
-        // queue transaction
-        const transactionId = crypto.randomUUID();
-        const promises = [];
-        const resolves = [];
-        for (const queue of necessaryQueues) {
-            let currResolve;
-            promises.push(new Promise((resolve) => {
-                currResolve = resolve;
-            }));
-            queue.enqueue(async () => {
-                currResolve();
-
-                await new Promise((resolve) => {
-                    resolves.push(resolve);
-                });
-
-                this.#dispatchEvent('taskComplete', {
-                    queue,
-                    transactionId
-                });
-            });
-        }
-
-        // Process Task
-        this.#handleTask(typeObj, data, promises, resolves);
-
-        this.#transactionRegistry.transactions.set(transactionId, {
-            data,
-            aborted: false,
-            transactionInstance: null
-        });
-        this.#dispatchEvent('taskAdded', necessaryQueues);
-        return transactionId;
-    }
-
-    onTransactionEnd() {
-        
-    }
-
-    async #transaction(config, data) {
+    async transaction(type, data) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
-        if (!isPlainObject(config)) throw new Error('Must pass a valid config object');
+        const config = this.#transactionRegistry.configs.get(type);
+        if (!config || !isPlainObject(config)) throw new Error('Must pass a valid config object');
 
         const { storeNames, mode, handlers, options } = config;
         try {
             await new Promise((resolve, reject) => {
                 const handler = handlers.handler;
-                if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof transactionHandler}`);
+                if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
 
                 const transaction = this.#db.transaction(storeNames, mode, options);
                 const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
