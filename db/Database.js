@@ -2,6 +2,9 @@ import { DatabaseError } from "./DatabaseError.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
 import { Queue } from "../data-structures/Queue.js";
 
+// TODO:
+// - Figure out how to do an abort (utilize transactionRegistry)
+
 export class Database {
     #db;
     #state = 'closed';
@@ -99,10 +102,17 @@ export class Database {
         this.#state = 'opened';
     }
 
-    async transaction(storeNames, mode, handlers, data, options) {
+    async transaction(storeNames, mode, handlers, data, options = {}) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
-        
+
+        // Validate transaction params
+        if (!storeNames || (typeof storeNames === 'string' && storeNames.trim().length === 0) || (Array.isArray(storeNames) && storeNames.length === 0)) throw new Error(`Expected "storeNames" to be a non-empty string/array but received: "${storeNames}"`);
+        if (!['readwrite', 'readonly'].includes(mode)) throw new Error(`Expected "mode" to be a string "readwrite" or "readonly" but received: "${mode}"`);
+        if (!isPlainObject(handlers)) throw new Error(`Expected "handlers" to be a plain object but received: "${handlers}"`);
+        if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
+
+        // Process Transaction
         try {
             await new Promise((resolve, reject) => {
                 const handler = handlers.handler;
