@@ -113,8 +113,6 @@ export class Database {
         if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
 
         // Process Transaction
-        const abortController = new AbortController();
-        this.#transactionRegistry.set('currentTransaction', abortController);
         try {
             await new Promise((resolve, reject) => {
                 const handler = handlers.handler;
@@ -123,10 +121,6 @@ export class Database {
                 const transaction = this.#db.transaction(storeNames, mode, options);
                 const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
                 
-                abortController.signal.addEventListener('abort', () => {
-                    transaction.abort();
-                    reject('transaction aborted');
-                });
                 transaction.onabort = (event) => {
                     if (typeof onAbortHandler === 'function') {
                         onAbortHandler(event);
