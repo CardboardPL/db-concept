@@ -149,7 +149,7 @@ export class Database {
             handler(transaction, data);
         });
         // Attach abort method
-        op.abort = controller.abort;
+        op.abort = (reason) => { controller.abort(reason) };
 
         return op;
     }
