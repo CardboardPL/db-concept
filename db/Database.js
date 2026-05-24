@@ -118,18 +118,24 @@ export class Database {
             const transaction = this.#db.transaction(storeNames, mode, options);
             const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
             
-            transaction.onabort = (event) => {
+            // Start of Abort Logic
+            let abortEvent;
+
+            transaction.onabort = (transactionEvent) => {
                 if (typeof onAbortHandler === 'function') {
-                    onAbortHandler(event);
+                    onAbortHandler(transactionEvent);
                 }
-                resolve();
+                reject({
+                    abortEvent,
+                    transactionEvent
+                });
             }
 
-            // Abort Logic
-            controller.signal.addEventListener('abort', () => {
+            controller.signal.addEventListener('abort', (e) => {
+                abortEvent = e;
                 transaction.abort();
-                reject('Transaction aborted');
             });
+            // End of Abort Logic
 
             transaction.onerror = (event) => {
                 const error = event.error;
