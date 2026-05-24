@@ -1,15 +1,10 @@
 import { DatabaseError } from "./DatabaseError.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
-import { Queue } from "../data-structures/Queue.js";
-
-// TODO:
-// - Figure out how to do an abort (utilize transactionRegistry)
 
 export class Database {
     #db;
     #state = 'closed';
     #upgradeStatus = 'upgraded';
-    #transactionRegistry = new Map();
     #deleting = false;
     #versionChanged = false;
     #name;
@@ -102,7 +97,7 @@ export class Database {
         this.#state = 'opened';
     }
 
-    async transaction(storeNames, mode, handlers, data, options = {}) {
+    transaction(storeNames, mode, handlers, data, options = {}) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
 
@@ -112,42 +107,51 @@ export class Database {
         if (!isPlainObject(handlers)) throw new Error(`Expected "handlers" to be a plain object but received: "${handlers}"`);
         if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
 
-        // Process Transaction
-        try {
-            await new Promise((resolve, reject) => {
-                const handler = handlers.handler;
-                if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
+        // Create a controller to handle the abort
+        const controller = new AbortController();
 
-                const transaction = this.#db.transaction(storeNames, mode, options);
-                const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
-                
-                transaction.onabort = (event) => {
-                    if (typeof onAbortHandler === 'function') {
-                        onAbortHandler(event);
-                    }
-                    resolve();
+        // Transaction Logic Here
+        const op = new Promise((resolve, reject) => {
+            const handler = handlers.handler;
+            if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
+
+            const transaction = this.#db.transaction(storeNames, mode, options);
+            const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
+            
+            transaction.onabort = (event) => {
+                if (typeof onAbortHandler === 'function') {
+                    onAbortHandler(event);
                 }
+                resolve();
+            }
 
-                transaction.onerror = (event) => {
-                    const error = event.error;
-                    if (typeof onErrorHandler === 'function') {
-                        onErrorHandler(error);
-                    }
-                    reject(error);
-                }
-
-                transaction.oncomplete = (event) => {
-                    if (typeof onCompleteHandler === 'function') {
-                        onCompleteHandler(event);
-                    }
-                    resolve();
-                }
-
-                handler(transaction, data);
+            // Abort Logic
+            controller.signal.addEventListener('abort', () => {
+                transaction.abort();
+                reject('Transaction aborted');
             });
-        } catch(err) {
-            throw new DatabaseError('An error occured while performing a transaction', err);
-        }
+
+            transaction.onerror = (event) => {
+                const error = event.error;
+                if (typeof onErrorHandler === 'function') {
+                    onErrorHandler(error);
+                }
+                reject(error);
+            }
+
+            transaction.oncomplete = (event) => {
+                if (typeof onCompleteHandler === 'function') {
+                    onCompleteHandler(event);
+                }
+                resolve();
+            }
+
+            handler(transaction, data);
+        });
+        // Attach abort method
+        op.abort = controller.abort;
+
+        return op;
     }
 
     async upgrade(handlers, attemptCap) {
