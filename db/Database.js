@@ -7,6 +7,7 @@ export class Database {
     #upgradeStatus = 'upgraded';
     #deleting = false;
     #versionChanged = false;
+    #transactionRegistry = new Map();
     #name;
     #version;
 
@@ -111,6 +112,7 @@ export class Database {
         const controller = new AbortController();
 
         // Transaction Logic Here
+        const transactionId = crypto.randomUUID();
         const op = new Promise((resolve, reject) => {
             const handler = handlers.handler;
             if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
@@ -125,6 +127,7 @@ export class Database {
                 if (typeof onAbortHandler === 'function') {
                     onAbortHandler(transactionEvent);
                 }
+                this.#transactionRegistry.delete(transactionId);
                 reject({
                     abortEvent,
                     transactionEvent
@@ -142,6 +145,7 @@ export class Database {
                 if (typeof onErrorHandler === 'function') {
                     onErrorHandler(error);
                 }
+                this.#transactionRegistry.delete(transactionId);
                 reject(error);
             }
 
@@ -149,6 +153,7 @@ export class Database {
                 if (typeof onCompleteHandler === 'function') {
                     onCompleteHandler(event);
                 }
+                this.#transactionRegistry.delete(transactionId);
                 resolve();
             }
 
@@ -156,6 +161,9 @@ export class Database {
         });
         // Attach abort method
         op.abort = (reason) => { controller.abort(reason) };
+
+        // Register transaction to the registry
+        this.#transactionRegistry.set(transactionId, op);
 
         return op;
     }
