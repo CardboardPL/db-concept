@@ -223,10 +223,24 @@ export class Database {
         this.#deleting = false;
     }
 
-    close() {
+    close(config = {}) {
         if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
         if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
+        if (!isPlainObject(config)) throw new Error(`Expected close method config to be a plain object but received: ${config}`);
+
+        // Set default values if messed with
+        config.abortTransactions = config.abortTransactions == null ? config.abortTransactions : true;
+        config.reason = config.reason ? config.reason : `Database "${this.#name}" was closed`;
+
         this.#state = 'closed';
+
+        if (config.abortTransactions) {
+            for (const [id, tx] of this.#transactionRegistry) {
+                tx.abort(config.reason);
+                this.#transactionRegistry.delete(id);
+            }
+        }
+
         this.#db.close();
     }
 }
