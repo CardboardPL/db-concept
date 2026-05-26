@@ -8,11 +8,19 @@ export class Database {
     #deleting = false;
     #versionChanged = false;
     #transactionRegistry = new Map();
+    #databaseId;
     #name;
     #version;
 
-    constructor(name) {
-        if (typeof name !== 'string') throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
+    constructor(name, databaseId) {
+        if (typeof name !== 'string' || !name.trim()) throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
+        if (databaseId == null) {
+            this.#databaseId = name;
+        } else if (typeof databaseId !== 'string' || !databaseId.trim()) {
+            throw new Error(`Failed to initialize DB: expected name to be of a non-empty string but received: ${name}`);
+        } else {
+            this.#databaseId = databaseId;
+        }
         this.#name = name;
     }
 
@@ -179,23 +187,25 @@ export class Database {
         }
 
         this.#upgradeStatus = 'upgrading';
-        let attempts = 0;
-        while (this.#upgradeStatus !== 'upgraded') {
-            try {
-                if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
-                this.close({
-                    reason: `Database "${this.#name}" is upgrading`
-                });
-                await this.open(handlers);
-                attempts++;
-            } catch (err) {
-                if (this.#state !== 'closed') this.close({
-                    reason: `Upgrade for Database "${this.#db}" encountered error`
-                });
-                this.#upgradeStatus = 'upgraded';
-                throw new DatabaseError('An error occured while upgrading the database', err);
+        await navigator.locks.request(this.#databaseId, async () => {
+            let attempts = 0;
+            while (this.#upgradeStatus !== 'upgraded') {
+                try {
+                    if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
+                    this.close({
+                        reason: `Database "${this.#name}" is upgrading`
+                    });
+                    await this.open(handlers);
+                    attempts++;
+                } catch (err) {
+                    if (this.#state !== 'closed') this.close({
+                        reason: `Upgrade for Database "${this.#db}" encountered error`
+                    });
+                    this.#upgradeStatus = 'upgraded';
+                    throw new DatabaseError('An error occured while upgrading the database', err);
+                }
             }
-        }
+        });
     }
 
     async delete(handlers, options) {
