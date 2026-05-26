@@ -92,7 +92,9 @@ export class Database {
                     }
                 }
             }
-            this.close();
+            this.close({
+                reason: `Database "${this.#name}" version was changed`
+            });
         }
 
         this.#state = 'opened';
@@ -181,11 +183,15 @@ export class Database {
         while (this.#upgradeStatus !== 'upgraded') {
             try {
                 if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
-                this.close();
+                this.close({
+                    reason: `Database "${this.#name}" is upgrading`
+                });
                 await this.open(handlers);
                 attempts++;
             } catch (err) {
-                if (this.#state !== 'closed') this.close();
+                if (this.#state !== 'closed') this.close({
+                    reason: `Upgrade for Database "${this.#db}" encountered error`
+                });
                 this.#upgradeStatus = 'upgraded';
                 throw new DatabaseError('An error occured while upgrading the database', err);
             }
@@ -196,8 +202,10 @@ export class Database {
         if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
         if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
-        this.#deleting = true
-        if (this.#state !== 'closed') this.close();
+        this.#deleting = true;
+        if (this.#state !== 'closed') this.close({
+            reason: `Database "${this.#name}" is being deleted`
+        });
         const DBDeleteRequest = indexedDB.deleteDatabase(this.#name, options);
         try {
             await new Promise((resolve, reject) => {
