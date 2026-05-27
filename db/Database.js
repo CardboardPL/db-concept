@@ -132,15 +132,16 @@ export class Database {
         if (!isPlainObject(handlers)) throw new Error(`Expected "handlers" to be a plain object but received: "${handlers}"`);
         if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
 
+        // Validate Primary Handler
+        const handler = handlers.handler;
+        if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
+
         // Create a controller to handle the abort
         const controller = new AbortController();
 
         // Transaction Logic Here
         const transactionId = crypto.randomUUID();
         const op = new Promise((resolve, reject) => {
-            const handler = handlers.handler;
-            if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
-
             const transaction = this.#db.transaction(storeNames, mode, options);
             const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
             
@@ -227,10 +228,11 @@ export class Database {
         return lock;
     }
 
-    async delete(handlers, options) {
+    async delete(handlers = {}, options) {
         if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
         if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
+        if (!isPlainObject(handlers)) throw new Error('Expected handlers argument to be a plain object');
         this.#deleting = true;
         if (this.#state !== 'closed') this.close({
             reason: `Database "${this.#name}" is being deleted`
@@ -239,7 +241,7 @@ export class Database {
         try {
             await new Promise((resolve, reject) => {
                 DBDeleteRequest.onerror = (event) => {
-                    const error = event.error;
+                    const error = event.target.error;
                     if (typeof handlers.onerror === 'function') {
                         handlers.onerror(error);
                     }
