@@ -185,7 +185,10 @@ export class Database {
             handler(transaction, data);
         });
         // Attach abort method
-        op.abort = (reason) => { controller.abort(reason) };
+        op.abort = (reason) => { 
+            controller.abort(reason);
+            return op;
+         };
 
         // Register transaction to the registry
         this.#transactionRegistry.set(transactionId, op);
