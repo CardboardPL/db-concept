@@ -122,19 +122,15 @@ export class Database {
         this.#state = 'opened';
     }
 
-    transaction(storeNames, mode, handlers, data, options = {}) {
+    transaction(storeNames, mode, handler, data, options = {}) {
         if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
         if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
 
         // Validate transaction params
         if (!storeNames || (typeof storeNames === 'string' && storeNames.trim().length === 0) || (Array.isArray(storeNames) && storeNames.length === 0)) throw new Error(`Expected "storeNames" to be a non-empty string/array but received: "${storeNames}"`);
         if (!['readwrite', 'readonly'].includes(mode)) throw new Error(`Expected "mode" to be a string "readwrite" or "readonly" but received: "${mode}"`);
-        if (!isPlainObject(handlers)) throw new Error(`Expected "handlers" to be a plain object but received: "${handlers}"`);
-        if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
-
-        // Validate Primary Handler
-        const handler = handlers.handler;
         if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
+        if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
 
         // Create a controller to handle the abort
         const controller = new AbortController();
@@ -143,46 +139,50 @@ export class Database {
         const transactionId = crypto.randomUUID();
         const op = new Promise((resolve, reject) => {
             const transaction = this.#db.transaction(storeNames, mode, options);
-            const [ onAbortHandler, onErrorHandler, onCompleteHandler ] = [ handlers.onabort, handlers.onerror, handlers.oncomplete ];
+            let handlerResult;
             
             // Start of Abort Logic
             let abortEvent;
 
             transaction.onabort = (transactionEvent) => {
-                if (typeof onAbortHandler === 'function') {
-                    onAbortHandler(transactionEvent);
-                }
                 this.#transactionRegistry.delete(transactionId);
                 reject({
+                    type: 'abort',
                     abortEvent,
                     transactionEvent
                 });
             }
 
-            controller.signal.addEventListener('abort', (e) => {
+            const abortHandler = (e) => {
                 abortEvent = e;
                 transaction.abort();
-            });
+                controller.signal.removeEventListener('abort', abortHandler);
+            }
+
+            controller.signal.addEventListener('abort', abortHandler);
             // End of Abort Logic
 
             transaction.onerror = (event) => {
-                const error = event.error;
-                if (typeof onErrorHandler === 'function') {
-                    onErrorHandler(error);
-                }
+                controller.signal.removeEventListener('abort', abortHandler);
+                const error = event.target.error;
                 this.#transactionRegistry.delete(transactionId);
-                reject(error);
+                reject({
+                    type: 'error',
+                    error
+                });
             }
 
             transaction.oncomplete = (event) => {
-                if (typeof onCompleteHandler === 'function') {
-                    onCompleteHandler(event);
-                }
+                controller.signal.removeEventListener('abort', abortHandler);
                 this.#transactionRegistry.delete(transactionId);
-                resolve();
+                resolve({
+                    type: 'complete',
+                    result: handlerResult,
+                    event
+                });
             }
 
-            handler(transaction, data);
+            handlerResult = handler(transaction, data);
         });
         // Attach abort method
         op.abort = (reason) => { 
