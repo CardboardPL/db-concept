@@ -197,41 +197,52 @@ export class Database {
     }
 
     upgrade(handlers, attemptCap) {
-        if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
-        if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
-        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
-        if (Number.isNaN(attemptCap)) {
-            attemptCap = null;
-        }
-
-        this.#upgradeStatus = 'upgrading';
         const controller = new AbortController();
-        const lock = navigator.locks.request(this.#databaseId, { signal: controller.signal }, async () => {
-            let attempts = 0;
-            while (this.#upgradeStatus !== 'upgraded') {
-                try {
-                    if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
-                    this.close({
-                        reason: `Database "${this.#name}" is upgrading`
-                    });
-                    await this.open(handlers, { upgradeAbortSignal: controller.signal });
-                    attempts++;
-                } catch (err) {
-                    if (this.#state !== 'closed') this.close({
-                        reason: `Upgrade for Database "${this.#name}" encountered error`
-                    });
-                    this.#upgradeStatus = 'upgraded';
-                    throw new DatabaseError('An error occured while upgrading the database', err);
-                }
+        const lock = new Promise((resolve) => {
+            // Validate State
+            if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
+            if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
+            if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot perform multiple upgrade operations simultaneously');
+            if (Number.isNaN(attemptCap)) {
+                attemptCap = null;
             }
+
+            // Set status to "upgrading" to start the process
+            this.#upgradeStatus = 'upgrading';
+            
+            // Upgrade the database
+            navigator.locks.request(this.#databaseId, { signal: controller.signal }, async () => {
+                let attempts = 0;
+                while (this.#upgradeStatus !== 'upgraded') {
+                    try {
+                        if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
+                        this.close({
+                            reason: `Database "${this.#name}" is upgrading`
+                        });
+                        await this.open(handlers, { upgradeAbortSignal: controller.signal });
+                        attempts++;
+                    } catch (err) {
+                        if (this.#state !== 'closed') this.close({
+                            reason: `Upgrade for Database "${this.#name}" encountered error`
+                        });
+                        this.#upgradeStatus = 'upgraded';
+                        throw new DatabaseError('An error occured while upgrading the database', err);
+                    }
+                }
+
+                // Finish the operation
+                resolve();
+            });
         });
+        
+        // Attach abort handler
         lock.abort = () => {
             controller.abort('Upgrade was aborted');
         };
+
         return lock;
     }
-
-    // Remove handlers and opt for promise chaining
+    
     delete(options) {
         return new Promise((resolve, reject) => {
             // Validate State
