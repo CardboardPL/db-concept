@@ -123,21 +123,21 @@ export class Database {
     }
 
     transaction(storeNames, mode, handler, data, options = {}) {
-        if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
-        if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
-
-        // Validate transaction params
-        if (!storeNames || (typeof storeNames === 'string' && storeNames.trim().length === 0) || (Array.isArray(storeNames) && storeNames.length === 0)) throw new Error(`Expected "storeNames" to be a non-empty string/array but received: "${storeNames}"`);
-        if (!['readwrite', 'readonly'].includes(mode)) throw new Error(`Expected "mode" to be a string "readwrite" or "readonly" but received: "${mode}"`);
-        if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
-        if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
-
         // Create a controller to handle the abort
         const controller = new AbortController();
 
         // Transaction Logic Here
         const transactionId = crypto.randomUUID();
         const op = new Promise((resolve, reject) => {
+            if (this.#state !== 'opened') throw new Error(`Cannot perform a transaction: expected the state to be 'opened' but received ${this.#state}`);
+            if (this.#upgradeStatus !== 'upgraded') throw new Error(`Cannot perform a transcation: expected the upgradeStatus to be 'upgraded' but received ${this.#upgradeStatus}`);
+
+            // Validate transaction params
+            if (!storeNames || (typeof storeNames === 'string' && storeNames.trim().length === 0) || (Array.isArray(storeNames) && storeNames.length === 0)) throw new Error(`Expected "storeNames" to be a non-empty string/array but received: "${storeNames}"`);
+            if (!['readwrite', 'readonly'].includes(mode)) throw new Error(`Expected "mode" to be a string "readwrite" or "readonly" but received: "${mode}"`);
+            if (typeof handler !== 'function') throw new Error(`Expected handler to be a function but received ${typeof handler}`);
+            if (!isPlainObject(options)) throw new Error(`Expected "options" to be a plain object but received: "${options}"`);
+
             const transaction = this.#db.transaction(storeNames, mode, options);
             let handlerResult;
             
