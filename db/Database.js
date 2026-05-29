@@ -95,7 +95,7 @@ export class Database {
             this.#state = 'closed';
             if (err.name === 'VersionError') {
                 this.#version = undefined;
-                return this.open(handlers);
+                return this.open(handlers, options);
             } else {
                 throw new DatabaseError('Failed to open database', err);
             }
@@ -242,7 +242,7 @@ export class Database {
 
         return lock;
     }
-    
+
     delete(options) {
         return new Promise((resolve, reject) => {
             // Validate State
