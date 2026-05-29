@@ -284,7 +284,7 @@ export class Database {
         if (!isPlainObject(config)) throw new Error(`Expected close method config to be a plain object but received: ${config}`);
 
         // Set default values if messed with
-        config.abortTransactions = config.abortTransactions == null ? config.abortTransactions : true;
+        config.abortTransactions = config.abortTransactions == null ? true : config.abortTransactions;
         config.reason = config.reason ? config.reason : `Database "${this.#name}" was closed`;
 
         this.#state = 'closed';
