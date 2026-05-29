@@ -231,38 +231,40 @@ export class Database {
         return lock;
     }
 
-    async delete(handlers = {}, options) {
-        if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
-        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
-        if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
-        if (!isPlainObject(handlers)) throw new Error('Expected handlers argument to be a plain object');
-        this.#deleting = true;
-        if (this.#state !== 'closed') this.close({
-            reason: `Database "${this.#name}" is being deleted`
-        });
-        const DBDeleteRequest = indexedDB.deleteDatabase(this.#name, options);
-        try {
-            await new Promise((resolve, reject) => {
-                DBDeleteRequest.onerror = (event) => {
-                    const error = event.target.error;
-                    if (typeof handlers.onerror === 'function') {
-                        handlers.onerror(error);
-                    }
-                    reject(error);
-                }
+    // Remove handlers and opt for promise chaining
+    delete(options) {
+        return new Promise((resolve, reject) => {
+            // Validate State
+            if (this.#state === 'opening') throw new Error('Cannot delete the database while it\'s opening');
+            if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot delete the database while it\'s upgrading');
+            if (this.#deleting === true) throw new Error('Cannot delete a database when it\'s already being deleted');
 
-                DBDeleteRequest.onsuccess = (event) => {
-                    if (typeof handlers.onsuccess === 'function') {
-                        handlers.onsuccess(event);
-                    }
-                    resolve();
-                }
+            // Set the stage
+            this.#deleting = true;
+            if (this.#state !== 'closed') this.close({
+                reason: `Database "${this.#name}" is being deleted`
             });
-        } catch (err) {
-            this.#deleting = false;
-            throw new DatabaseError('An error occured while deleting the database', err);
-        }
-        this.#deleting = false;
+
+            // Perform the operation
+            const DBDeleteRequest = indexedDB.deleteDatabase(this.#name, options);
+            DBDeleteRequest.onerror = (event) => {
+                this.#deleting = false;
+                const error = event.target.error;
+                reject({
+                    type: 'error',
+                    error,
+                    timeStamp: event.timeStamp
+                });
+            }
+
+            DBDeleteRequest.onsuccess = (event) => {
+                this.#deleting = false;
+                resolve({
+                    type: 'success',
+                    timeStamp: event.timeStamp
+                });
+            }
+        });
     }
 
     close(config = {}) {
