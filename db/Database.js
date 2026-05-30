@@ -36,11 +36,7 @@ export class Database {
         return versionToUse;
     }
 
-    isClosed() {
-        return this.#state === 'closed' && this.#upgradeStatus !== 'upgrading';
-    }
-
-    async open(handlers, options = {}) {
+    async #openDatabase(handlers, options = {}) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
         if (this.#state === 'opened') throw new Error('Tried opening an already opened database');
@@ -120,6 +116,15 @@ export class Database {
         }
 
         this.#state = 'opened';
+    }
+
+    isClosed() {
+        return this.#state === 'closed' && this.#upgradeStatus !== 'upgrading';
+    }
+
+    async open(handlers, options) {
+        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot open the database while it\'s upgrading the database');
+        await this.#openDatabase(handlers, options);
     }
 
     transaction(storeNames, mode, handler, data, options = {}) {
@@ -219,7 +224,7 @@ export class Database {
                         this.close({
                             reason: `Database "${this.#name}" is upgrading`
                         });
-                        await this.open(handlers, { upgradeAbortSignal: controller.signal });
+                        await this.#openDatabase(handlers, { upgradeAbortSignal: controller.signal });
                         attempts++;
                     } catch (err) {
                         if (this.#state !== 'closed') this.close({
