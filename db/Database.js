@@ -118,6 +118,27 @@ export class Database {
         this.#state = 'opened';
     }
 
+    #closeDatabase(config = {}) {
+        if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
+        if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
+        if (!isPlainObject(config)) throw new Error(`Expected close method config to be a plain object but received: ${config}`);
+
+        // Set default values if messed with
+        config.abortTransactions = config.abortTransactions == null ? true : config.abortTransactions;
+        config.reason = config.reason ? config.reason : `Database "${this.#name}" was closed`;
+
+        this.#state = 'closed';
+
+        if (config.abortTransactions) {
+            for (const [id, tx] of this.#transactionRegistry) {
+                tx.abort(config.reason);
+                this.#transactionRegistry.delete(id);
+            }
+        }
+
+        this.#db.close();
+    }
+
     isClosed() {
         return this.#state === 'closed' && this.#upgradeStatus !== 'upgrading';
     }
@@ -221,13 +242,13 @@ export class Database {
                 while (this.#upgradeStatus !== 'upgraded') {
                     try {
                         if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
-                        this.close({
+                        this.#closeDatabase({
                             reason: `Database "${this.#name}" is upgrading`
                         });
                         await this.#openDatabase(handlers, { upgradeAbortSignal: controller.signal });
                         attempts++;
                     } catch (err) {
-                        if (this.#state !== 'closed') this.close({
+                        if (this.#state !== 'closed') this.#closeDatabase({
                             reason: `Upgrade for Database "${this.#name}" encountered error`
                         });
                         this.#upgradeStatus = 'upgraded';
@@ -284,23 +305,7 @@ export class Database {
     }
 
     close(config = {}) {
-        if (this.#state === 'opening') throw new Error('Cannot close a database while it\'s opening');
-        if (this.#state !== 'opened') throw new Error('Tried closing an already closed database');
-        if (!isPlainObject(config)) throw new Error(`Expected close method config to be a plain object but received: ${config}`);
-
-        // Set default values if messed with
-        config.abortTransactions = config.abortTransactions == null ? true : config.abortTransactions;
-        config.reason = config.reason ? config.reason : `Database "${this.#name}" was closed`;
-
-        this.#state = 'closed';
-
-        if (config.abortTransactions) {
-            for (const [id, tx] of this.#transactionRegistry) {
-                tx.abort(config.reason);
-                this.#transactionRegistry.delete(id);
-            }
-        }
-
-        this.#db.close();
+        if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot close the database while it\'s upgrading');
+        this.#closeDatabase(config);
     }
 }
