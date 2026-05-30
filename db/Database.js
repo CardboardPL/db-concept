@@ -40,6 +40,7 @@ export class Database {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
         if (this.#state === 'opened') throw new Error('Tried opening an already opened database');
+        if (this.#deleting === true) throw new Error('Tried opening a database that is being deleted');
         this.#state = 'opening';
         
         const DBOpenRequest = indexedDB.open(this.#name, this.#decideVersionToUse());
@@ -91,7 +92,7 @@ export class Database {
             this.#state = 'closed';
             if (err.name === 'VersionError') {
                 this.#version = undefined;
-                return this.open(handlers, options);
+                return this.#openDatabase(handlers, options);
             } else {
                 throw new DatabaseError('Failed to open database', err);
             }
@@ -110,7 +111,7 @@ export class Database {
                     }
                 }
             }
-            this.close({
+            this.#closeDatabase({
                 reason: `Database "${this.#name}" version was changed`
             });
         }
@@ -278,7 +279,7 @@ export class Database {
 
             // Set the stage
             this.#deleting = true;
-            if (this.#state !== 'closed') this.close({
+            if (this.#state !== 'closed') this.#closeDatabase({
                 reason: `Database "${this.#name}" is being deleted`
             });
 
