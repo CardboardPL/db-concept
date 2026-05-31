@@ -38,18 +38,15 @@ export class Database {
 
     async #openDatabase(handlers, options = {}) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
-        if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
-        if (this.#state === 'opened') throw new Error('Tried opening an already opened database');
         if (this.#deleting === true) throw new Error('Tried opening a database that is being deleted');
-        this.#state = 'opening';
         
+        this.#state = 'opening';
         const DBOpenRequest = indexedDB.open(this.#name, this.#decideVersionToUse());
         const upgradeAbortSignal = options.upgradeAbortSignal;
         
         try {
             this.#db = await new Promise((resolve, reject) => {
                 DBOpenRequest.onupgradeneeded = (event) => {
-                    this.#upgradeStatus = 'upgraded';
                     const tx = event.target.transaction;
                     if (upgradeAbortSignal && upgradeAbortSignal.aborted) {
                         tx.abort();
@@ -65,12 +62,34 @@ export class Database {
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
                         handlers.onupgradeneeded(event);
                     }
+
+                    this.#upgradeStatus = 'upgraded';
                 };
 
                 DBOpenRequest.onsuccess = (event) => {
                     const db = event.target.result;
                     this.#versionChanged = false;
                     this.#version = db.version;
+
+                    this.#db.onversionchange = (event) => {
+                        this.#versionChanged = true;
+                        if (this.#upgradeStatus === 'upgrading') return;
+                        if (handlers && typeof handlers.onversionchange === 'function') {
+                            try {
+                                handlers.onversionchange(event);
+                            } catch(err) {
+                                console.error(err);
+                                if (typeof handlers.onversionchangeerror === 'function') {
+                                    handlers.onversionchangeerror(err);
+                                }
+                            }
+                        }
+                        this.#closeDatabase({
+                            reason: `Database "${this.#name}" version was changed`
+                        });
+                    }
+
+                    this.#state = 'opened';
                     resolve(db);
                 };
 
@@ -89,34 +108,14 @@ export class Database {
                 };
             });
         } catch (err) {
-            this.#state = 'closed';
             if (err.name === 'VersionError') {
                 this.#version = undefined;
                 return this.#openDatabase(handlers, options);
             } else {
+                this.#state = 'closed';
                 throw new DatabaseError('Failed to open database', err);
             }
         }
-
-        this.#db.onversionchange = (event) => {
-            this.#versionChanged = true;
-            if (this.#upgradeStatus === 'upgrading') return;
-            if (handlers && typeof handlers.onversionchange === 'function') {
-                try {
-                    handlers.onversionchange(event);
-                } catch(err) {
-                    console.error(err);
-                    if (typeof handlers.onversionchangeerror === 'function') {
-                        handlers.onversionchangeerror(err);
-                    }
-                }
-            }
-            this.#closeDatabase({
-                reason: `Database "${this.#name}" version was changed`
-            });
-        }
-
-        this.#state = 'opened';
     }
 
     #closeDatabase(config = {}) {
@@ -145,6 +144,8 @@ export class Database {
     }
 
     async open(handlers, options) {
+        if (this.#state === 'opening') throw new Error('Cannot run multiple open attempts');
+        if (this.#state === 'opened') throw new Error('Tried opening an already opened database');
         if (this.#upgradeStatus === 'upgrading') throw new Error('Cannot open the database while it\'s upgrading the database');
         await this.#openDatabase(handlers, options);
     }
@@ -225,7 +226,7 @@ export class Database {
 
     upgrade(handlers, attemptCap) {
         const controller = new AbortController();
-        const lock = new Promise((resolve) => {
+        const lock = new Promise(async (resolve, reject) => {
             // Validate State
             if (this.#state === 'opening') throw new Error('Cannot upgrade a database while it\'s opening');
             if (this.#state !== 'opened') throw new Error('Tried upgrading a closed database');
@@ -238,28 +239,33 @@ export class Database {
             this.#upgradeStatus = 'upgrading';
             
             // Upgrade the database
-            navigator.locks.request(this.#databaseId, { signal: controller.signal }, async () => {
-                let attempts = 0;
-                while (this.#upgradeStatus !== 'upgraded') {
-                    try {
-                        if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
-                        this.#closeDatabase({
-                            reason: `Database "${this.#name}" is upgrading`
-                        });
-                        await this.#openDatabase(handlers, { upgradeAbortSignal: controller.signal });
-                        attempts++;
-                    } catch (err) {
-                        if (this.#state !== 'closed') this.#closeDatabase({
-                            reason: `Upgrade for Database "${this.#name}" encountered error`
-                        });
-                        this.#upgradeStatus = 'upgraded';
-                        throw new DatabaseError('An error occured while upgrading the database', err);
+            try {
+                await navigator.locks.request(this.#databaseId, { signal: controller.signal }, async () => {
+                    let attempts = 0;
+                    while (this.#upgradeStatus !== 'upgraded') {
+                        try {
+                            if (typeof attemptCap === 'number' && attemptCap <= attempts) throw new Error(`Failed to upgrade within ${attemptCap} attempts`);
+                            this.#closeDatabase({
+                                reason: `Database "${this.#name}" is upgrading`
+                            });
+                            await this.#openDatabase(handlers, { upgradeAbortSignal: controller.signal });
+                            attempts++;
+                        } catch (err) {
+                            if (this.#state !== 'closed') this.#closeDatabase({
+                                reason: `Upgrade for Database "${this.#name}" encountered error`
+                            });
+                            this.#upgradeStatus = 'upgraded';
+                            throw new DatabaseError('An error occured while upgrading the database', err);
+                        }
                     }
-                }
 
-                // Finish the operation
-                resolve();
-            });
+                    // Finish the operation
+                    resolve();
+                });
+            } catch(err) {
+                this.#upgradeStatus = 'upgraded';
+                reject(err);
+            }
         });
         
         // Attach abort handler
