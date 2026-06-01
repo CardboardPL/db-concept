@@ -213,7 +213,7 @@ export class Database {
             handlerResult = handler(transaction, data);
         });
         // Attach abort method
-        op.abort = (reason) => { 
+        op.abort = (reason = 'Transaction was aborted') => { 
             controller.abort(reason);
             return op;
          };
@@ -269,8 +269,8 @@ export class Database {
         });
         
         // Attach abort handler
-        lock.abort = () => {
-            controller.abort('Upgrade was aborted');
+        lock.abort = (reason = 'Upgrade was aborted') => {
+            controller.abort(reason);
         };
 
         return lock;
