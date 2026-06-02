@@ -111,12 +111,11 @@ export class Database {
             });
         } catch (err) {
             if (err.name === 'VersionError') {
-                this.#version = undefined;
+                this.#versionChanged = true;
                 return this.#openDatabase(handlers, options);
-            } else {
-                this.#state = 'closed';
-                throw new DatabaseError('Failed to open database', err);
             }
+            this.#state = 'closed';
+            throw new DatabaseError('Failed to open database', err);
         }
     }
 
