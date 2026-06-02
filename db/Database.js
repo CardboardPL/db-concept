@@ -1,6 +1,7 @@
 import { DatabaseError } from "./DatabaseError.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
 
+// TODO: Create a proxy to the raw database/transaction instances to prevent leaving the class in a broken state
 export class Database {
     #db;
     #state = 'closed';
@@ -36,6 +37,7 @@ export class Database {
         return versionToUse;
     }
 
+    // TODO: Compose events so that callers can't access the raw db instance
     async #openDatabase(handlers, options = {}) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#deleting === true) throw new Error('Tried opening a database that is being deleted');
@@ -71,7 +73,7 @@ export class Database {
                     this.#versionChanged = false;
                     this.#version = db.version;
 
-                    this.#db.onversionchange = (event) => {
+                    db.onversionchange = (event) => {
                         this.#versionChanged = true;
                         if (this.#upgradeStatus === 'upgrading') return;
                         if (handlers && typeof handlers.onversionchange === 'function') {
@@ -150,6 +152,7 @@ export class Database {
         await this.#openDatabase(handlers, options);
     }
 
+    // TODO: Compose events so that callers can't access the raw db instance
     transaction(storeNames, mode, handler, data, options = {}) {
         // Create a controller to handle the abort
         const controller = new AbortController();
@@ -276,6 +279,7 @@ export class Database {
         return lock;
     }
 
+    // TODO: Compose events so that callers can't access the raw db instance
     delete(options) {
         return new Promise((resolve, reject) => {
             // Validate State
