@@ -65,7 +65,36 @@ export class Database {
                     }
 
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
-                        handlers.onupgradeneeded(event);
+                        handlers.onupgradeneeded(new Proxy(event.target.result, {
+                            get(target, prop) {
+                                if (prop === 'abortUpgrade') {
+                                    return handleAbort;
+                                }
+
+                                if (prop === 'oldVersion') {
+                                    return event.oldVersion;
+                                }
+                                
+                                if (prop === 'name' || prop === 'version' || prop === 'deleteObjectStore') {
+                                    return target[prop];
+                                }
+
+                                if (prop === 'createObjectStore') {
+                                    return (name, options) => {
+                                        const store = target[prop](name, options);
+                                        return new Proxy(store, {
+                                            // add more logic here
+                                        });
+                                    };
+                                }
+
+                                return undefined;
+                            },
+
+                            set() {
+                                throw new Error('Cannot modify the database object');
+                            }
+                        }));
                     }
 
                     this.#upgradeStatus = 'upgraded';
@@ -322,3 +351,12 @@ export class Database {
         this.#closeDatabase(config);
     }
 }
+
+const db = new Database('test1234');
+await db.open({
+    onupgradeneeded: (database) => {
+        console.log(database.abortUpgrade);
+    }
+});
+await db.delete();
+
