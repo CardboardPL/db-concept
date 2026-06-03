@@ -55,10 +55,13 @@ export class Database {
                         return;
                     }
 
+                    function handleAbort() {
+                        tx.abort();
+                        upgradeAbortSignal.removeEventListener('abort', handleAbort);
+                    }
+
                     if (upgradeAbortSignal) {
-                        upgradeAbortSignal.addEventListener('abort', () => {
-                            tx.abort();
-                        });
+                        upgradeAbortSignal.addEventListener('abort', handleAbort);
                     }
 
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
