@@ -66,26 +66,26 @@ export class Database {
 
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
                         handlers.onupgradeneeded(new Proxy(event.target.result, {
-                            get(target, prop, receiver) {
+                            get(target, prop) {
                                 if (prop === 'abortUpgrade') {
                                     return handleAbort;
                                 }
 
                                 if (prop === 'oldVersion') {
-                                    return Reflect.get(event, prop, receiver);
+                                    return event.oldVersion;
                                 }
                                 
                                 if (prop === 'name' || prop === 'version' || prop === 'deleteObjectStore') {
-                                    return Reflect.get(target, prop, receiver);
+                                    return Reflect.get(target, prop, target);
                                 }
 
                                 if (prop === 'createObjectStore') {
-                                    return (...args) => {
-                                        const store = Reflect.get(target, prop, receiver).call(target, ...args);
+                                    return (name, options) => {
+                                        const store = target.createObjectStore(name, options);
                                         return new Proxy(store, {
-                                            get(t, p, r) {
+                                            get(t, p) {
                                                 if (p === 'name' || p === 'keyPath' || p === 'indexNames' || p === 'autoIncrement' || p === 'deleteIndex') {
-                                                    return Reflect.get(t, p, r);
+                                                    return Reflect.get(t, p, store);
                                                 }
 
                                                 if (p === 'createIndex') {
@@ -93,7 +93,19 @@ export class Database {
                                                         const index = store.createIndex(indexName, keyPath, options);
 
                                                         return new Proxy(index, {
-                                                            // add logic here
+                                                            get(t, p) {
+                                                                if (p === 'isAutoLocale' || p === 'locale' || p === 'name' || p === 'keyPath' || p === 'multiEntry' || p === 'unique') {
+                                                                    return Reflect.get(t, p, index);
+                                                                }
+                                                                return undefined;
+                                                            },
+
+                                                            set(t, p, value) {
+                                                                if (p !== 'name') throw new Error(`Cannot modify the "${p}" property of the IDBIndex instance`);
+                                                                if (typeof value !== 'string' || !value.trim()) throw new Error(`Expected value to be a non-empty string but received: ${value}`);
+                                                                Reflect.set(t, p, value, index);
+                                                                return true;
+                                                            }
                                                         });
                                                     };
                                                 }
@@ -104,7 +116,7 @@ export class Database {
                                             set(t, p, value) {
                                                 if (p !== 'name') throw new Error('Cannot modify the IDBObjectStore instance');
                                                 if (typeof value !== 'string' || !value.trim()) throw new Error(`Expected value to be a non-empty string but received: ${value}`);
-                                                Reflect.set(t, p, value, t);
+                                                Reflect.set(t, p, value, store);
                                                 return true;
                                             }
                                         });
@@ -381,7 +393,7 @@ await db.open({
     onupgradeneeded: (database) => {
         const store = database.createObjectStore('1', { keyPath: 'hi' });
         store.name = 'test12';
-        console.log(store);
+        console.log(database.oldVersion, database.name);
     }
 });
 await db.delete();
