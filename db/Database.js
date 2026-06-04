@@ -80,8 +80,8 @@ export class Database {
                                 }
 
                                 if (prop === 'createObjectStore') {
-                                    return (name, options) => {
-                                        const store = Reflect.get(target, prop, receiver)(name, options);
+                                    return (...args) => {
+                                        const store = Reflect.get(target, prop, receiver).call(target, ...args);
                                         return new Proxy(store, {
                                             // add more logic here
                                         });
@@ -355,7 +355,7 @@ export class Database {
 const db = new Database('test1234');
 await db.open({
     onupgradeneeded: (database) => {
-        console.log(database.abortUpgrade);
+        const store = database.createObjectStore('1');
     }
 });
 await db.delete();
