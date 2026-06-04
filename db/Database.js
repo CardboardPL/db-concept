@@ -66,22 +66,22 @@ export class Database {
 
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
                         handlers.onupgradeneeded(new Proxy(event.target.result, {
-                            get(target, prop) {
+                            get(target, prop, receiver) {
                                 if (prop === 'abortUpgrade') {
                                     return handleAbort;
                                 }
 
                                 if (prop === 'oldVersion') {
-                                    return event.oldVersion;
+                                    return Reflect.get(event, prop, receiver);
                                 }
                                 
                                 if (prop === 'name' || prop === 'version' || prop === 'deleteObjectStore') {
-                                    return target[prop];
+                                    return Reflect.get(target, prop, receiver);
                                 }
 
                                 if (prop === 'createObjectStore') {
                                     return (name, options) => {
-                                        const store = target[prop](name, options);
+                                        const store = Reflect.get(target, prop, receiver)(name, options);
                                         return new Proxy(store, {
                                             // add more logic here
                                         });
