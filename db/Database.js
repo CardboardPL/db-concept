@@ -83,7 +83,30 @@ export class Database {
                                     return (...args) => {
                                         const store = Reflect.get(target, prop, receiver).call(target, ...args);
                                         return new Proxy(store, {
-                                            // add more logic here
+                                            get(t, p, r) {
+                                                if (p === 'name' || p === 'keyPath' || p === 'indexNames' || p === 'autoIncrement' || p === 'deleteIndex') {
+                                                    return Reflect.get(t, p, r);
+                                                }
+
+                                                if (p === 'createIndex') {
+                                                    return (indexName, keyPath, options) => {
+                                                        const index = store.createIndex(indexName, keyPath, options);
+
+                                                        return new Proxy(index, {
+                                                            // add logic here
+                                                        });
+                                                    };
+                                                }
+
+                                                return undefined;
+                                            },
+
+                                            set(t, p, value) {
+                                                if (p !== 'name') throw new Error('Cannot modify the IDBObjectStore instance');
+                                                if (typeof value !== 'string' || !value.trim()) throw new Error(`Expected value to be a non-empty string but received: ${value}`);
+                                                Reflect.set(t, p, value, t);
+                                                return true;
+                                            }
                                         });
                                     };
                                 }
@@ -352,10 +375,13 @@ export class Database {
     }
 }
 
+// MODIFY TO TEST FEATURES
 const db = new Database('test1234');
 await db.open({
     onupgradeneeded: (database) => {
-        const store = database.createObjectStore('1');
+        const store = database.createObjectStore('1', { keyPath: 'hi' });
+        store.name = 'test12';
+        console.log(store);
     }
 });
 await db.delete();
