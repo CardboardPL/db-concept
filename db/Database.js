@@ -1,5 +1,6 @@
 import { DatabaseError } from "./DatabaseError.js";
 import { isPlainObject } from "../utils/isPlainObject.js";
+import { IDBDatabaseProxy } from "./IDBDatabaseProxy.js";
 
 // TODO: Create a proxy to the raw database/transaction instances to prevent leaving the class in a broken state
 export class Database {
@@ -65,71 +66,7 @@ export class Database {
                     }
 
                     if (handlers && typeof handlers.onupgradeneeded === 'function') {
-                        handlers.onupgradeneeded(new Proxy(event.target.result, {
-                            get(target, prop) {
-                                if (prop === 'abortUpgrade') {
-                                    return handleAbort;
-                                }
-
-                                if (prop === 'oldVersion') {
-                                    return event.oldVersion;
-                                }
-                                
-                                if (prop === 'name' || prop === 'version' || prop === 'deleteObjectStore') {
-                                    return Reflect.get(target, prop, target);
-                                }
-
-                                if (prop === 'createObjectStore') {
-                                    return (name, options) => {
-                                        const store = target.createObjectStore(name, options);
-                                        return new Proxy(store, {
-                                            get(t, p) {
-                                                if (p === 'name' || p === 'keyPath' || p === 'indexNames' || p === 'autoIncrement' || p === 'deleteIndex') {
-                                                    return Reflect.get(t, p, store);
-                                                }
-
-                                                if (p === 'createIndex') {
-                                                    return (indexName, keyPath, options) => {
-                                                        const index = store.createIndex(indexName, keyPath, options);
-
-                                                        return new Proxy(index, {
-                                                            get(t, p) {
-                                                                if (p === 'isAutoLocale' || p === 'locale' || p === 'name' || p === 'keyPath' || p === 'multiEntry' || p === 'unique') {
-                                                                    return Reflect.get(t, p, index);
-                                                                }
-                                                                return undefined;
-                                                            },
-
-                                                            set(t, p, value) {
-                                                                if (p !== 'name') throw new Error(`Cannot modify the "${p}" property of the IDBIndex instance`);
-                                                                if (typeof value !== 'string' || !value.trim()) throw new Error(`Expected value to be a non-empty string but received: ${value}`);
-                                                                Reflect.set(t, p, value, index);
-                                                                return true;
-                                                            }
-                                                        });
-                                                    };
-                                                }
-
-                                                return undefined;
-                                            },
-
-                                            set(t, p, value) {
-                                                if (p !== 'name') throw new Error('Cannot modify the IDBObjectStore instance');
-                                                if (typeof value !== 'string' || !value.trim()) throw new Error(`Expected value to be a non-empty string but received: ${value}`);
-                                                Reflect.set(t, p, value, store);
-                                                return true;
-                                            }
-                                        });
-                                    };
-                                }
-
-                                return undefined;
-                            },
-
-                            set() {
-                                throw new Error('Cannot modify the database object');
-                            }
-                        }));
+                        handlers.onupgradeneeded(new IDBDatabaseProxy(event.target.result, event, handleAbort));
                     }
 
                     this.#upgradeStatus = 'upgraded';
@@ -393,6 +330,8 @@ await db.open({
     onupgradeneeded: (database) => {
         const store = database.createObjectStore('1', { keyPath: 'hi' });
         store.name = 'test12';
+        database.deleteObjectStore('test12')
+        console.log(database)
         console.log(database.oldVersion, database.name);
     }
 });
