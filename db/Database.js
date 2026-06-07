@@ -14,6 +14,7 @@ export class Database {
     #name;
     #version;
 
+    // TODO: Add config param for id, autoClose logic and etc.
     constructor(name, databaseId) {
         if (typeof name !== 'string' || !name.trim()) throw new Error(`Failed to initialize DB: expected name to be of type string but received ${typeof name}`);
         if (databaseId == null) {
@@ -38,7 +39,7 @@ export class Database {
         return versionToUse;
     }
 
-    // TODO: Compose events so that callers can't access the raw db instance
+    // TODO: Assess method for future optimizations
     async #openDatabase(handlers, options = {}) {
         if (typeof handlers !== 'object' && handlers != null) throw new Error('Must pass a valid handler object');
         if (this.#deleting === true) throw new Error('Tried opening a database that is being deleted');
@@ -82,17 +83,17 @@ export class Database {
                         if (this.#upgradeStatus === 'upgrading') return;
                         if (handlers && typeof handlers.onversionchange === 'function') {
                             try {
-                                handlers.onversionchange(event);
+                                handlers.onversionchange({
+                                    type: 'versionchange',
+                                    oldVersion: event.oldVersion,
+                                    newVersion: event.newVersion
+                                });
                             } catch(err) {
-                                console.error(err);
                                 if (typeof handlers.onversionchangeerror === 'function') {
                                     handlers.onversionchangeerror(err);
                                 }
                             }
                         }
-                        this.#closeDatabase({
-                            reason: `Database "${this.#name}" version was changed`
-                        });
                     }
 
                     this.#state = 'opened';
@@ -101,7 +102,11 @@ export class Database {
 
                 DBOpenRequest.onblocked = (event) => {
                     if (handlers && typeof handlers.onblocked === 'function') {
-                        handlers.onblocked(event);
+                        handlers.onblocked({
+                            type: 'blocked',
+                            oldVersion: event.oldVersion,
+                            newVersion: event.newVersion
+                        });
                     }
                 };
     
@@ -330,10 +335,22 @@ await db.open({
     onupgradeneeded: (database) => {
         const store = database.createObjectStore('1', { keyPath: 'hi' });
         store.name = 'test12';
-        database.deleteObjectStore('test12')
-        console.log(database)
-        console.log(database.oldVersion, database.name);
+        database.deleteObjectStore('test12');
+    }
+});
+await db.upgrade({
+    onupgradeneeded: (database) => {
+        console.log('run')
+        const store = database.createObjectStore('1', { keyPath: 'hi' });
+        store.name = 'test12';
+        database.deleteObjectStore('test12');
+    },
+    onblocked: (event) => {
+        console.log(event);
+    },
+    onversionchange: (event) => {
+        console.log(event);
+        // event.closeDatabase();
     }
 });
 await db.delete();
-
