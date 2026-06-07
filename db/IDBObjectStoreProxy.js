@@ -10,7 +10,7 @@ export class IDBObjectStoreProxy {
                 }
 
                 if (prop === 'createIndex') {
-                    return (indexName, keyPath, options) => IDBIndexProxy(objectStore, indexName, keyPath, options);
+                    return (indexName, keyPath, options) => new IDBIndexProxy(objectStore, indexName, keyPath, options);
                 }
 
                 return undefined;
