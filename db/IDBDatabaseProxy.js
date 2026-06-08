@@ -12,7 +12,7 @@ export class IDBDatabaseProxy {
                     return event.oldVersion;
                 }
                 
-                if (prop === 'name' || prop === 'version') {
+                if (prop === 'name' || prop === 'version' || prop === 'objectStoreNames') {
                     return Reflect.get(target, prop, database);
                 }
 
