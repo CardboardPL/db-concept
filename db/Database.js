@@ -59,7 +59,9 @@ export class Database {
 
                     function handleAbort() {
                         tx.abort();
-                        upgradeAbortSignal.removeEventListener('abort', handleAbort);
+                        if (upgradeAbortSignal) {
+                            upgradeAbortSignal.removeEventListener('abort', handleAbort);
+                        }
                     }
 
                     if (upgradeAbortSignal) {
