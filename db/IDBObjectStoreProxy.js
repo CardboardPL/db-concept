@@ -1,7 +1,33 @@
 import { IDBIndexProxy } from "./IDBIndexProxy.js";
 
 export class IDBObjectStoreProxy {
-    constructor(database, name, options) {
+    constructor(type, ...args) {
+        if (type === 'transaction') {
+            return this.#transactionVariant(...args);
+        } else if (type === 'upgrade') {
+            return this.#upgradeVariant(...args);
+        }
+        throw new Error('No valid type was provided');
+    }
+
+    #transactionVariant(tx, name) {
+        const objectStore = tx.objectStore(name);
+        return new Proxy(objectStore, {
+            get(target, prop) {
+                if (prop === 'name' || prop === 'keyPath' || prop === 'indexNames' || prop === 'autoIncrement') {
+                    return Reflect.get(target, prop, objectStore);
+                }
+
+                // TODO: Implement add(), clear(), count(), delete(), get(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
+            },
+
+            set() {
+                throw new TypeError('This IDBObjectStore instance is read-only');
+            }
+        });
+    }
+
+    #upgradeVariant(database, name, options) {
         const objectStore = database.createObjectStore(name, options);
         return new Proxy(objectStore, {
             get(target, prop) {
