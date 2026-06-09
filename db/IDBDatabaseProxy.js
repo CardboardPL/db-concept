@@ -21,7 +21,7 @@ export class IDBDatabaseProxy {
                 }
 
                 if (prop === 'createObjectStore') {
-                    return (name, options) => new IDBObjectStoreProxy(target, name, options);
+                    return (name, options) => new IDBObjectStoreProxy('upgrade', target, name, options);
                 }
 
                 return undefined;
