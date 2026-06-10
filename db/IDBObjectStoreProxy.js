@@ -10,8 +10,18 @@ export class IDBObjectStoreProxy {
         throw new Error('No valid type was provided');
     }
 
-    #transactionVariant(tx, name) {
+    #transactionVariant(tx, intents, name) {
         const objectStore = tx.objectStore(name);
+        const objectStoreIntents = new Map();
+        intents.push({
+            objectStoreName: name,
+            objectStoreIntents
+        });
+        
+        const methods = {
+            add: (value, key) => { objectStoreIntents.set(key, value)},
+        };
+
         return new Proxy(objectStore, {
             get(target, prop) {
                 if (prop === 'name' || prop === 'keyPath' || prop === 'indexNames' || prop === 'autoIncrement') {
@@ -19,6 +29,7 @@ export class IDBObjectStoreProxy {
                 }
 
                 // TODO: Implement add(), clear(), count(), delete(), get(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
+                return methods[prop];
             },
 
             set() {
