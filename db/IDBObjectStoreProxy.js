@@ -1,6 +1,9 @@
 import { IDBIndexProxy } from "./IDBIndexProxy.js";
 
 export class IDBObjectStoreProxy {
+    #tx;
+    #objectStore;
+    
     constructor(type, ...args) {
         if (type === 'transaction') {
             return this.#transactionVariant(...args);
@@ -10,22 +13,56 @@ export class IDBObjectStoreProxy {
         throw new Error('No valid type was provided');
     }
 
-    #transactionVariant(tx, intents, name) {
-        const objectStore = tx.objectStore(name);
+    #initializeTransaction(db, name, options) {
+        this.#tx = db.transaction(name, 'readonly', options);
+        this.#objectStore = this.#tx.objectStore(name);
+    }
+
+
+    #transactionVariant(db, name, options, intents) {
         const objectStoreIntents = new Map();
         intents.push({
             objectStoreName: name,
             objectStoreIntents
         });
+
+        this.#initializeTransaction(db, name, options);
         
         const methods = {
             add: (value, key) => { objectStoreIntents.set(key, value)},
+            get: (key) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (objectStoreIntents.has(key)) resolve(objectStoreIntents.get(key));
+
+                        const request = this.#objectStore.get(key);
+
+                        request.onsuccess = () => {
+                            resolve(request.result);
+                        }
+                        request.onerror = () => {
+                            reject(request.error);
+                        }
+                    } catch(err) {
+                        if (err.name === 'TransactionInactiveError') {
+                            this.#initializeTransaction(db, name, options);
+                            return methods.get(key);
+                        }
+                        throw err
+                    }
+                    
+                });
+            },
         };
 
-        return new Proxy(objectStore, {
+        const retrieveProperties = (prop) => {
+            return Reflect.get(this.#objectStore, prop, this.#objectStore);
+        }
+
+        return new Proxy({}, {
             get(target, prop) {
                 if (prop === 'name' || prop === 'keyPath' || prop === 'indexNames' || prop === 'autoIncrement') {
-                    return Reflect.get(target, prop, objectStore);
+                    return retrieveProperties(prop)
                 }
 
                 // TODO: Implement add(), clear(), count(), delete(), get(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
