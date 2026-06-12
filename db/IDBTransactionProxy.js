@@ -14,7 +14,7 @@ export class IDBTransactionProxy {
                 }
 
                 if (prop === 'objectStore') {
-                    return (name) => new IDBObjectStoreProxy('transaction', tx, intents, name);
+                    return (name) => new IDBObjectStoreProxy('transaction', tx, name, intents);
                 }
             },
             set() {
