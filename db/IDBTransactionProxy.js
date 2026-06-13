@@ -8,11 +8,6 @@ export class IDBTransactionProxy {
                     return Reflect.get(target, prop, tx);
                 }
 
-                // Reassess this uses... and/or refactor how it will behave
-                if (prop === 'commit') {
-                    return () => tx.commit();
-                }
-
                 if (prop === 'objectStore') {
                     return (name) => new IDBObjectStoreProxy('transaction', tx, name, intents);
                 }
