@@ -41,11 +41,19 @@ export class IDBObjectStoreProxy {
         });
         
         const methods = {
-            add: (value, key) => { objectStoreIntents.set(key, value)},
+            add: (value, key) => {
+                let addIntents;
+                if (!objectStoreIntents.has('add')) {
+                    addIntents = new Map();
+                    objectStoreIntents.set('add', addIntents);
+                }
+                
+                addIntents.set(key, value);
+            },
             get: (key) => {
                 return new Promise((resolve, reject) => {
                     try {
-                        if (objectStoreIntents.has(key)) resolve(objectStoreIntents.get(key));
+                        if (objectStoreIntents.has('add')) resolve(objectStoreIntents.get('add').get(key));
 
                         const request = this.#objectStore.get(key);
 
