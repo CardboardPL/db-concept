@@ -73,9 +73,12 @@ export class IDBObjectStoreProxy {
                         }
                         throw err
                     }
-                    
                 });
             },
+            clear() {
+                objectStoreIntents.delete('add');
+                objectStoreIntents.set('clear', true);
+            }
         };
 
         const retrieveProperties = (prop) => {
@@ -88,7 +91,7 @@ export class IDBObjectStoreProxy {
                     return retrieveProperties(prop)
                 }
 
-                // TODO: Implement add(), clear(), count(), delete(), get(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
+                // TODO: Implement count(), delete(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
                 return methods[prop];
             },
 
