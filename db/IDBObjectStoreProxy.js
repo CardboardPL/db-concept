@@ -50,7 +50,11 @@ export class IDBObjectStoreProxy {
             get: (key) => {
                 return new Promise((resolve, reject) => {
                     try {
-                        if (objectStoreIntents.has('add')) resolve(objectStoreIntents.get('add').get(key));
+                        const addIntents = objectStoreIntents.get('add');
+                        if (addIntents && addIntents.has(key)) {
+                            resolve(addIntents.get(key));
+                            return;
+                        }
 
                         const request = this.#objectStore.get(key);
 
