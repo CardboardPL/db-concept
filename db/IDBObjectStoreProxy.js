@@ -13,8 +13,8 @@ export class IDBObjectStoreProxy {
         throw new Error('No valid type was provided');
     }
 
-    #reinitializeTransaction(db, name, options) {
-        this.#tx = db.transaction(name, 'readonly', options);
+    #reinitializeTransaction(db, name) {
+        this.#tx = db.transaction(name, 'readonly');
         this.#objectStore = this.#tx.objectStore(name);
     }
 
@@ -25,10 +25,7 @@ export class IDBObjectStoreProxy {
             this.#objectStore = tx.objectStore(name);
         } catch(err) {
             if (err.name === 'TransactionInactiveError') {
-                const { durability } = tx;
-                this.#reinitializeTransaction(tx.db, name, {
-                    durability
-                });
+                this.#reinitializeTransaction(tx.db, name);
             } else {
                 throw err;
             }
@@ -65,10 +62,7 @@ export class IDBObjectStoreProxy {
                         }
                     } catch(err) {
                         if (err.name === 'TransactionInactiveError') {
-                            const { durability } = this.#tx;
-                            this.#reinitializeTransaction(this.#tx.db, name, {
-                                durability
-                            });
+                            this.#reinitializeTransaction(this.#tx.db, name);
                             return methods.get(key);
                         }
                         throw err
