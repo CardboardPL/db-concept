@@ -32,9 +32,11 @@ export class IDBObjectStoreProxy {
         }
 
         const objectStoreIntents = new Map();
+        const fallbackKey = Symbol('objectStoreKeyFallback');
         intents.push({
             objectStoreName: name,
-            objectStoreIntents
+            objectStoreIntents,
+            fallbackKey
         });
         
         const methods = {
@@ -43,9 +45,23 @@ export class IDBObjectStoreProxy {
                 if (!objectStoreIntents.has('add')) {
                     addIntents = new Map();
                     objectStoreIntents.set('add', addIntents);
+                } else {
+                    addIntents = objectStoreIntents.get('add');
                 }
                 
-                addIntents.set(key, value);
+                if (key == null) {
+                    if (this.#objectStore.autoIncrement === false) throw new Error('Tried adding an entry without a key while autoIncrement is false');
+                    let toAdd = addIntents.get(fallbackKey);
+                    if (!toAdd) {
+                        toAdd = [];
+                        addIntents.set(fallbackKey, toAdd);
+                    }
+                    toAdd.push(value);
+                } else if (addIntents.has(key)) {
+                    throw new Error('Tried adding an entry that has an existing key');
+                } else {
+                    addIntents.set(key, value);
+                }
             },
             get: (key) => {
                 return new Promise((resolve, reject) => {
