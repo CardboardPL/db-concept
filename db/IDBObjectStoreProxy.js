@@ -18,17 +18,20 @@ export class IDBObjectStoreProxy {
         this.#objectStore = this.#tx.objectStore(name);
     }
 
+    #handleRuntimeError(err) {
+        if (err.name === 'TransactionInactiveError') {
+            this.#reinitializeTransaction(tx.db, name);
+        } else {
+            throw err;
+        }
+    }
 
     #transactionVariant(tx, name, intents) {
         try {
             this.#tx = tx;
             this.#objectStore = tx.objectStore(name);
         } catch(err) {
-            if (err.name === 'TransactionInactiveError') {
-                this.#reinitializeTransaction(tx.db, name);
-            } else {
-                throw err;
-            }
+            this.#handleRuntimeError(err);
         }
 
         const objectStoreIntents = new Map();
@@ -81,28 +84,20 @@ export class IDBObjectStoreProxy {
                             reject(request.error);
                         }
                     } catch(err) {
-                        if (err.name === 'TransactionInactiveError') {
-                            this.#reinitializeTransaction(this.#tx.db, name);
-                            return methods.get(key);
-                        }
-                        throw err
+                        this.#handleRuntimeError(err);
                     }
                 });
             },
-            clear() {
+            clear: () => {
                 objectStoreIntents.delete('add');
                 objectStoreIntents.set('clear', true);
             }
         };
 
-        const retrieveProperties = (prop) => {
-            return Reflect.get(this.#objectStore, prop, this.#objectStore);
-        }
-
         return new Proxy({}, {
-            get(target, prop) {
+            get: (target, prop) => {
                 if (prop === 'name' || prop === 'keyPath' || prop === 'indexNames' || prop === 'autoIncrement') {
-                    return retrieveProperties(prop)
+                    return Reflect.get(this.#objectStore, prop, this.#objectStore);
                 }
 
                 // TODO: Implement count(), delete(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
@@ -139,3 +134,9 @@ export class IDBObjectStoreProxy {
         });
     }
 }
+
+function hi() {
+
+}
+
+hi.apply()
