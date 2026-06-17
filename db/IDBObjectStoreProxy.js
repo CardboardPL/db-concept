@@ -1,6 +1,8 @@
 import { IDBIndexProxy } from "./IDBIndexProxy.js";
 
 export class IDBObjectStoreProxy {
+    #name;
+    // Transaction Variant Specific Properties
     #tx;
     #objectStore;
     
@@ -13,6 +15,9 @@ export class IDBObjectStoreProxy {
         throw new Error('No valid type was provided');
     }
 
+    // ==============================================================================
+    // Transaction Variant Methods
+    // ==============================================================================
     #reinitializeTransaction(db, name) {
         this.#tx = db.transaction(name, 'readonly');
         this.#objectStore = this.#tx.objectStore(name);
@@ -20,16 +25,43 @@ export class IDBObjectStoreProxy {
 
     #handleRuntimeError(err) {
         if (err.name === 'TransactionInactiveError') {
-            this.#reinitializeTransaction(tx.db, name);
+            this.#reinitializeTransaction(this.#tx.db, this.#name);
         } else {
             throw err;
         }
+    }
+
+    #countEntries(key) {
+        return new Promise((resolve, reject) => {
+            const request = this.#objectStore.count(key);
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+            request.onerror = () => {
+                reject(request.error);
+            };
+        });
+    }
+
+    #isEntryRegistered(key) {
+        return new Promise(async (resolve) => {
+            while (true) {
+                try {
+                    const amount = await this.#countEntries(key);
+                    resolve(amount > 0);
+                    break;
+                } catch (err) {
+                    this.#handleRuntimeError(err);
+                }
+            }
+        });
     }
 
     #transactionVariant(tx, name, intents) {
         try {
             this.#tx = tx;
             this.#objectStore = tx.objectStore(name);
+            this.#name = name;
         } catch(err) {
             this.#handleRuntimeError(err);
         }
@@ -43,7 +75,7 @@ export class IDBObjectStoreProxy {
         });
         
         const methods = {
-            add: (value, key) => {
+            add: async (value, key) => {
                 let addIntents;
                 if (!objectStoreIntents.has('add')) {
                     addIntents = new Map();
@@ -60,7 +92,7 @@ export class IDBObjectStoreProxy {
                         addIntents.set(fallbackKey, toAdd);
                     }
                     toAdd.push(value);
-                } else if (addIntents.has(key)) {
+                } else if (addIntents.has(key) || await this.#isEntryRegistered(key)) {
                     throw new Error('Tried adding an entry that has an existing key');
                 } else {
                     addIntents.set(key, value);
@@ -110,6 +142,9 @@ export class IDBObjectStoreProxy {
         });
     }
 
+    // ==============================================================================
+    // Upgrade Variant Methods
+    // ==============================================================================
     #upgradeVariant(database, name, options) {
         const objectStore = database.createObjectStore(name, options);
         return new Proxy(objectStore, {
@@ -134,9 +169,3 @@ export class IDBObjectStoreProxy {
         });
     }
 }
-
-function hi() {
-
-}
-
-hi.apply()
