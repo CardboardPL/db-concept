@@ -108,27 +108,23 @@ export class IDBObjectStoreProxy {
                     addIntents.set(key, value);
                 }
             },
-            get: (key) => {
-                return new Promise((resolve, reject) => {
-                    try {
-                        const addIntents = objectStoreIntents.get('add');
-                        if (addIntents && addIntents.has(key)) {
-                            resolve(addIntents.get(key));
-                            return;
-                        }
-
-                        const request = this.#objectStore.get(key);
-
-                        request.onsuccess = () => {
-                            resolve(request.result);
-                        }
-                        request.onerror = () => {
-                            reject(request.error);
-                        }
-                    } catch(err) {
-                        this.#handleRuntimeError(err);
+            get: async (key) => {
+                return await this.#executeWithRetry(() => new Promise((resolve, reject) => {
+                    const addIntents = objectStoreIntents.get('add');
+                    if (addIntents && addIntents.has(key)) {
+                        resolve(addIntents.get(key));
+                        return;
                     }
-                });
+
+                    const request = this.#objectStore.get(key);
+
+                    request.onsuccess = () => {
+                        resolve(request.result);
+                    }
+                    request.onerror = () => {
+                        reject(request.error);
+                    }
+                }), key);
             },
             clear: () => {
                 objectStoreIntents.delete('add');
