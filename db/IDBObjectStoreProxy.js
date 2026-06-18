@@ -31,6 +31,16 @@ export class IDBObjectStoreProxy {
         }
     }
 
+    async #executeWithRetry(handler, ...args) {
+        while (true) {
+            try {
+                return await handler(...args);
+            } catch(err) {
+                this.#handleRuntimeError(err);
+            }
+        }
+    }
+
     #countEntries(key) {
         return new Promise((resolve, reject) => {
             const request = this.#objectStore.count(key);
