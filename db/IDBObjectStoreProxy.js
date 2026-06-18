@@ -41,32 +41,6 @@ export class IDBObjectStoreProxy {
         }
     }
 
-    #countEntries(key) {
-        return new Promise((resolve, reject) => {
-            const request = this.#objectStore.count(key);
-            request.onsuccess = () => {
-                resolve(request.result);
-            };
-            request.onerror = () => {
-                reject(request.error);
-            };
-        });
-    }
-
-    #isEntryRegistered(key) {
-        return new Promise(async (resolve) => {
-            while (true) {
-                try {
-                    const amount = await this.#countEntries(key);
-                    resolve(amount > 0);
-                    break;
-                } catch (err) {
-                    this.#handleRuntimeError(err);
-                }
-            }
-        });
-    }
-
     #transactionVariant(tx, name, intents) {
         try {
             this.#tx = tx;
@@ -102,7 +76,7 @@ export class IDBObjectStoreProxy {
                         addIntents.set(fallbackKey, toAdd);
                     }
                     toAdd.push(value);
-                } else if (addIntents.has(key) || await this.#isEntryRegistered(key)) {
+                } else if (addIntents.has(key) || await methods.count(key) > 0) {
                     throw new Error('Tried adding an entry that has an existing key');
                 } else {
                     addIntents.set(key, value);
@@ -124,7 +98,18 @@ export class IDBObjectStoreProxy {
                     request.onerror = () => {
                         reject(request.error);
                     }
-                }), key);
+                }));
+            },
+            count: async (key) => {
+                return await this.#executeWithRetry(() => new Promise((resolve, reject) => {
+                    const request = this.#objectStore.count(key);
+                    request.onsuccess = () => {
+                        resolve(request.result);
+                    };
+                    request.onerror = () => {
+                        reject(request.error);
+                    };
+                }));
             },
             clear: () => {
                 objectStoreIntents.delete('add');
@@ -138,7 +123,7 @@ export class IDBObjectStoreProxy {
                     return Reflect.get(this.#objectStore, prop, this.#objectStore);
                 }
 
-                // TODO: Implement count(), delete(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
+                // TODO: Implement delete(), getAll(), getAllKeys(), getAllRecords(), getKey, index, openCursor(), openKeyCursor(), put() -> make them awaitable
                 return methods[prop];
             },
 
