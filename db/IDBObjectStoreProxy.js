@@ -54,8 +54,10 @@ export class IDBObjectStoreProxy {
             fallbackKey
         });
         
+        // TODO: Create a way to scan key ranges so that... it can accurately figure out if an element has been deleted or not
         const methods = {
             add: async (value, key) => {
+                if (key instanceof IDBKeyRange) throw new Error('Tried adding an entry whose key is a key range');
                 let addIntents;
                 if (!objectStoreIntents.has('add')) {
                     addIntents = new Map();
@@ -107,8 +109,29 @@ export class IDBObjectStoreProxy {
                     };
                 }));
             },
+            delete: async (key) => {
+                let deleted = false;
+                if (await methods.count(key) > 0) {
+                    let deleteIntents = objectStoreIntents.get('delete');
+                    if (!deleteIntents) {
+                        deleteIntents = new Map();
+                        objectStoreIntents.set('delete', deleteIntents);
+                    }
+                    deleteIntents.set(key, true);
+                    deleted = true;
+                }
+
+                const addIntents = objectStoreIntents.get('add');
+                if (addIntents && addIntents.has(key)) {
+                    addIntents.delete(key);
+                    deleted = true;
+                }
+
+                return deleted;
+            },
             clear: () => {
                 objectStoreIntents.delete('add');
+                objectStoreIntents.delete('delete');
                 objectStoreIntents.set('clear', true);
             }
         };
