@@ -18,23 +18,19 @@ export class IDBObjectStoreProxy {
     // ==============================================================================
     // Transaction Variant Methods
     // ==============================================================================
-    #reinitializeTransaction(db, name) {
-        this.#tx = db.transaction(name, 'readonly');
-        this.#objectStore = this.#tx.objectStore(name);
-    }
-
     #handleRuntimeError(err) {
         if (err.name === 'TransactionInactiveError') {
-            this.#reinitializeTransaction(this.#tx.db, this.#name);
+            this.#tx = this.#tx.db.transaction(this.#name, 'readonly');
+            this.#objectStore = this.#tx.objectStore(this.#name);
         } else {
             throw err;
         }
     }
 
-    async #executeWithRetry(handler, ...args) {
+    async #executeWithRetry(handler) {
         while (true) {
             try {
-                return await handler(...args);
+                return await handler();
             } catch(err) {
                 this.#handleRuntimeError(err);
             }
