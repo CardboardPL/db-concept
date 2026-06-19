@@ -88,6 +88,12 @@ export class IDBObjectStoreProxy {
                         return;
                     }
 
+                    const clearIntent = objectStoreIntents.get('clear');
+                    if (clearIntent) {
+                        resolve(undefined);
+                        return;
+                    };
+
                     const request = this.#objectStore.get(key);
 
                     request.onsuccess = () => {
