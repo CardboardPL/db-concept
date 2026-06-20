@@ -55,6 +55,20 @@ export class IDBObjectStoreProxy {
         });
         
         // TODO: Create a way to scan key ranges so that... it can accurately figure out if an element has been deleted or not
+        const getKeyRanges = (key) => {
+            let type = 'hybrid';
+            if (objectStoreIntents.has('clear')) {
+                type = 'cache-only';
+            }
+
+            // Add key range logic here
+
+            return {
+                type,
+                // keyrange
+            }
+        };
+
         const methods = {
             add: async (value, key) => {
                 if (key instanceof IDBKeyRange) throw new Error('Tried adding an entry whose key is a key range');
@@ -105,6 +119,7 @@ export class IDBObjectStoreProxy {
                 }));
             },
             count: async (key) => {
+                // TODO: Count from the "add" intents bucket and add them up to the final result
                 return await this.#executeWithRetry(() => new Promise((resolve, reject) => {
                     const request = this.#objectStore.count(key);
                     request.onsuccess = () => {
