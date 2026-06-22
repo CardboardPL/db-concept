@@ -1,8 +1,60 @@
-export class BinaryTree {
+import { isPlainObject } from './../utils/isPlainObject.js';
+
+export class BinarySearchTree {
     #root;
 
-    constructor(rootValue) {
-        this.#root = new BinaryTreeNode(rootValue);    
+    constructor(rootConfig) {
+        if (rootConfig) {
+            if (!isPlainObject(rootConfig)) throw new Error('Expected rootConfig to be a plain object');
+            this.#root = new BinaryTreeNode(rootConfig.data, rootConfig.weight);   
+        }
+    }
+
+    add(data, weight) {
+        if (!weight) {
+            weight = data;
+        }
+
+        if (!this.#root) {
+            this.#root = new BinaryTreeNode(data, weight);
+            return;
+        }
+
+        // Insrt node into the correct position
+        let current = this.#root;
+        while (true) {
+            if (weight > current.weight) {
+                if (!current.right) {
+                    current.setRight(new BinaryTreeNode(data, weight));
+                    break;
+                }
+
+                current = current.right;
+            } else {
+                if (!current.left) {
+                    current.setLeft(new BinaryTreeNode(data, weight));
+                    break;
+                }
+                current = current.left;
+            }
+        }
+    }
+
+    findByWeight(weight) {
+        let current = this.#root;
+
+        while (true) {
+            if (!current) return null;
+
+            const currentWeight = current.weight;
+            if (weight === currentWeight) return current;
+
+            if (weight > currentWeight) {
+                current = current.right;
+            } else {
+                current = current.left;
+            }
+        }
     }
 
     // TODO: add binary tree methods 
@@ -10,11 +62,12 @@ export class BinaryTree {
 }
 
 class BinaryTreeNode {
-    constructor(data, parent = null, left = null, right = null) {
+    constructor(data, weight, parent = null, left = null, right = null) {
         this.parent = parent;
         this.left = left;
         this.right = right;
         this.data = data;
+        this.weight = weight;
     }
 
     setLeft(node) {
