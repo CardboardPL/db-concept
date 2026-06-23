@@ -57,6 +57,32 @@ export class BinarySearchTree {
         }
     }
 
+    removeByWeight(weight) {
+        const node = this.findByWeight(weight);
+        if (!node) return null;
+
+        // TODO: implement this
+    }
+
+    removeSubTreeByWeight(weight) {
+        const node = this.findByWeight(weight);
+        if (!node) return null;
+
+        // Disconnect subtree from the parent
+        const parentNode = node.parent;
+        if (parentNode) {
+            if (node.weight > parentNode.weight) {
+                parentNode.right = null;
+            } else {
+                parentNode.left = null;
+            }
+        } else {
+            this.#root = null;
+        }
+
+        return node;
+    }
+
     // TODO: add binary tree methods 
     // TODO (FUTURE): extend this to have a balancing mechanism (new class)
 }
