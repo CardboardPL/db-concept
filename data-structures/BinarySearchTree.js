@@ -58,10 +58,31 @@ export class BinarySearchTree {
     }
 
     removeByWeight(weight) {
-        const node = this.findByWeight(weight);
-        if (!node) return null;
+        let current = this.findByWeight(weight);
+        if (!current) return null;
+        while (true) {
+            // handle no children case
+            if (!current.left && !current.right) {
+                const parent = current.parent;
+                if (parent) {
+                    if (parent.left === current) {
+                        parent.left = null;
+                    } else {
+                        parent.right = null;
+                    }
+                } else {
+                    this.#root = null;
+                }
+                break;
+            }
 
-        // TODO: implement this
+             // TODO: handle one child (overwrite value of current node with the highest value and then switch current to the node whose value was copied to the old node)
+             if (current.left && !current.right) {
+
+             } else if (!current.left && current.right) {
+
+             }
+        }
     }
 
     removeSubTreeByWeight(weight) {
