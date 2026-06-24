@@ -118,11 +118,16 @@ class BinaryTreeNode {
     }
 
     setLeft(node) {
-        if (!(node instanceof BinaryTreeNode)) throw new Error('Expected the left node to be an instance of a "BinaryTreeNode"');
+        if (!(node instanceof BinaryTreeNode) && node !== null) throw new Error('Expected the left node to be an instance of a "BinaryTreeNode"');
 
         // Clean up pointers
         if (this.left) {
             this.left.parent = null;
+        }
+
+        if (node === null) {
+            this.left = null;
+            return;
         }
 
         if (node.parent) {
@@ -139,11 +144,16 @@ class BinaryTreeNode {
     }
 
     setRight(node) {
-        if (!(node instanceof BinaryTreeNode)) throw new Error('Expected the right node to be an instance of a "BinaryTreeNode"');
+        if (!(node instanceof BinaryTreeNode) && node !== null) throw new Error('Expected the right node to be an instance of a "BinaryTreeNode"');
 
         // Clean up pointers
         if (this.right) {
             this.right.parent = null;
+        }
+
+        if (node === null) {
+            this.right = null;
+            return;
         }
 
         if (node.parent) {
