@@ -61,14 +61,17 @@ export class BinarySearchTree {
         let current = this.findByWeight(weight);
         if (!current) return null;
         while (true) {
+            const currentParent = current.parent;
+            const currentLeftNode = current.left;
+            const currentRightNode = current.right;
+
             // handle no children case
-            if (!current.left && !current.right) {
-                const parent = current.parent;
-                if (parent) {
-                    if (parent.left === current) {
-                        parent.left = null;
+            if (!currentLeftNode && !currentRightNode) {
+                if (currentParent) {
+                    if (currentParent.left === current) {
+                        currentParent.setLeft(null);
                     } else {
-                        parent.right = null;
+                        currentParent.setRight(null);
                     }
                 } else {
                     this.#root = null;
@@ -76,12 +79,32 @@ export class BinarySearchTree {
                 break;
             }
 
-             // TODO: handle one child (overwrite value of current node with the highest value and then switch current to the node whose value was copied to the old node)
-             if (current.left && !current.right) {
+            // TODO: handle one child (overwrite value of current node with the highest value and then switch current to the node whose value was copied to the old node)
+            if (currentLeftNode && !currentRightNode) {
+                if (currentParent) {
+                    if (currentParent.left === current) {
+                        currentParent.setLeft(currentLeftNode);
+                    } else {
+                        currentParent.setRight(currentLeftNode);
+                    }
+                } else {
+                    this.#root = currentLeftNode;
+                }
+                break;
+            } else if (!currentLeftNode && currentRightNode) {
+                if (currentParent) {
+                    if (currentParent.left === current) {
+                        currentParent.setLeft(currentRightNode);
+                    } else {
+                        currentParent.setRight(currentRightNode);
+                    }
+                } else {
+                    this.#root = currentRightNode;
+                }
+                break;
+            }
 
-             } else if (!current.left && current.right) {
-
-             }
+            // TODO: implemt two child child case (traverse the tree (pick right first and then try and get the nearest left value)
         }
     }
 
