@@ -115,6 +115,7 @@ export class BinarySearchTree {
             
             if (!currentLeftNode) {
                 initialNode.data = current.data;
+                initialNode.weight = current.weight;
                 if (currentParent.left === current) {
                     currentParent.setLeft(currentRightNode);
                 } else {
