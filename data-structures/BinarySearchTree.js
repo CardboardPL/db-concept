@@ -4,10 +4,14 @@ export class BinarySearchTree {
     #root;
 
     constructor(rootConfig) {
-        if (rootConfig) {
-            if (!isPlainObject(rootConfig)) throw new Error('Expected rootConfig to be a plain object');
-            this.#root = new BinaryTreeNode(rootConfig.data, rootConfig.weight);   
-        }
+        if (!rootConfig == null) return;
+        if (!isPlainObject(rootConfig)) throw new Error('Expected rootConfig to be a plain object');
+        this.#root = new BinaryTreeNode({
+            left: rootConfig.left,
+            right: rootConfig.right,
+            data: rootConfig.data,
+            weight: rootConfig.weight
+        });
     }
 
     add(data, weight) {
@@ -16,7 +20,10 @@ export class BinarySearchTree {
         }
 
         if (!this.#root) {
-            this.#root = new BinaryTreeNode(data, weight);
+            this.#root = new BinaryTreeNode({
+                data,
+                weight
+            });
             return;
         }
 
@@ -25,14 +32,20 @@ export class BinarySearchTree {
         while (true) {
             if (weight > current.weight) {
                 if (!current.right) {
-                    current.setRight(new BinaryTreeNode(data, weight));
+                    current.setRight(new BinaryTreeNode({
+                        data,
+                        weight
+                    }));
                     break;
                 }
 
                 current = current.right;
             } else {
                 if (!current.left) {
-                    current.setLeft(new BinaryTreeNode(data, weight));
+                    current.setLeft(new BinaryTreeNode({
+                        data,
+                        weight
+                    }));
                     break;
                 }
                 current = current.left;
@@ -152,12 +165,39 @@ export class BinarySearchTree {
 }
 
 class BinaryTreeNode {
-    constructor(data, weight, parent = null, left = null, right = null) {
-        this.parent = parent;
-        this.left = left;
-        this.right = right;
-        this.data = data;
-        this.weight = weight;
+    constructor(config = {
+        left: null,
+        right: null,
+        data: null,
+        weight: null
+    }) {
+        // Validate arguments
+        if (!isPlainObject(config)) throw new TypeError(`Expected config to be a plain object but received: ${Array.isArray(config) ? 'an Array' : 'a ' + typeof config}`);
+
+        // Setup left pointer
+        if (config.left == null) {
+            this.left = null;
+        } else if (!(config.left instanceof BinaryTreeNode)) { 
+            throw new TypeError('Expected left node to be an instance of BinaryTreeNode or null/undefined');
+        } else {
+            this.setLeft(config.left);
+        }
+
+        // Setup right pointer
+        if (config.right == null) {
+            this.right = null;
+        } else if (!(config.right instanceof BinaryTreeNode)) { 
+            throw new TypeError('Expected right node to be an instance of BinaryTreeNode or null/undefined');
+        } else {
+            this.setRight(config.right);
+        }
+
+        // Set up parent
+        this.parent = null;
+
+        // Assign data properties
+        this.data = config.data;
+        this.weight = config.weight;
     }
 
     setLeft(node) {
