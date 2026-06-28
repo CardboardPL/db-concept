@@ -169,7 +169,6 @@ class BinaryTreeNode {
         left: null,
         right: null,
         data: null,
-        weight: null
     }) {
         // Validate arguments
         if (!isPlainObject(config)) throw new TypeError(`Expected config to be a plain object but received: ${Array.isArray(config) ? 'an Array' : 'a ' + typeof config}`);
@@ -195,9 +194,8 @@ class BinaryTreeNode {
         // Set up parent
         this.parent = null;
 
-        // Assign data properties
+        // Assign data property
         this.data = config.data;
-        this.weight = config.weight;
     }
 
     setLeft(node) {
