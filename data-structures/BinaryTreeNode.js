@@ -1,35 +1,28 @@
 export class BinaryTreeNode {
-    constructor(config = {
-        left: null,
-        right: null,
-        data: null,
-    }) {
-        // Validate arguments
-        if (!isPlainObject(config)) throw new TypeError(`Expected config to be a plain object but received: ${Array.isArray(config) ? 'an Array' : 'a ' + typeof config}`);
-
+    constructor(data, left, right) {
         // Setup left pointer
-        if (config.left == null) {
+        if (left == null) {
             this.left = null;
-        } else if (!(config.left instanceof BinaryTreeNode)) { 
+        } else if (!(left instanceof BinaryTreeNode)) { 
             throw new TypeError('Expected left node to be an instance of BinaryTreeNode or null/undefined');
         } else {
-            this.setLeft(config.left);
+            this.setLeft(left);
         }
 
         // Setup right pointer
-        if (config.right == null) {
+        if (right == null) {
             this.right = null;
-        } else if (!(config.right instanceof BinaryTreeNode)) { 
+        } else if (!(right instanceof BinaryTreeNode)) { 
             throw new TypeError('Expected right node to be an instance of BinaryTreeNode or null/undefined');
         } else {
-            this.setRight(config.right);
+            this.setRight(right);
         }
 
         // Set up parent
         this.parent = null;
 
         // Assign data property
-        this.data = config.data;
+        this.data = data;
     }
 
     setLeft(node) {
