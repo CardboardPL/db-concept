@@ -1,51 +1,40 @@
-import { isPlainObject } from '../utils/isPlainObject.js';
+import { BinaryTreeNode } from './BinaryTreeNode.js';
+
+class BinarySearchTreeNode extends BinaryTreeNode {
+    constructor(data, weight, left, right) {
+        super(data, left, right);
+        this.weight = weight === undefined ? data : weight;
+    }
+}
 
 export class BinarySearchTree {
     #root;
 
-    constructor(rootConfig) {
-        if (!rootConfig == null) return;
-        if (!isPlainObject(rootConfig)) throw new Error('Expected rootConfig to be a plain object');
-        this.#root = new BinaryTreeNode({
-            left: rootConfig.left,
-            right: rootConfig.right,
-            data: rootConfig.data,
-            weight: rootConfig.weight
-        });
+    constructor(data, weight, left, right) {
+        if (data == null) return;
+        this.#root = new BinarySearchTreeNode(data, weight || data, left, right);
     }
 
     add(data, weight) {
-        if (!weight) {
-            weight = data;
-        }
-
+        if (data == null) throw new TypeError('Tried Adding a node with no data');
         if (!this.#root) {
-            this.#root = new BinaryTreeNode({
-                data,
-                weight
-            });
+            this.#root = new BinarySearchTreeNode(data, weight);
             return;
         }
 
-        // Insrt node into the correct position
+        // Insert node into the correct position
         let current = this.#root;
         while (true) {
             if (weight > current.weight) {
                 if (!current.right) {
-                    current.setRight(new BinaryTreeNode({
-                        data,
-                        weight
-                    }));
+                    current.setRight(new BinarySearchTreeNode(data, weight));
                     break;
                 }
 
                 current = current.right;
             } else {
                 if (!current.left) {
-                    current.setLeft(new BinaryTreeNode({
-                        data,
-                        weight
-                    }));
+                    current.setLeft(new BinarySearchTreeNode(data, weight));
                     break;
                 }
                 current = current.left;
@@ -159,94 +148,7 @@ export class BinarySearchTree {
 
         return node;
     }
-
-    // TODO: add binary tree methods 
-    // TODO (FUTURE): extend this to have a balancing mechanism (new class)
 }
 
-class BinaryTreeNode {
-    constructor(config = {
-        left: null,
-        right: null,
-        data: null,
-    }) {
-        // Validate arguments
-        if (!isPlainObject(config)) throw new TypeError(`Expected config to be a plain object but received: ${Array.isArray(config) ? 'an Array' : 'a ' + typeof config}`);
-
-        // Setup left pointer
-        if (config.left == null) {
-            this.left = null;
-        } else if (!(config.left instanceof BinaryTreeNode)) { 
-            throw new TypeError('Expected left node to be an instance of BinaryTreeNode or null/undefined');
-        } else {
-            this.setLeft(config.left);
-        }
-
-        // Setup right pointer
-        if (config.right == null) {
-            this.right = null;
-        } else if (!(config.right instanceof BinaryTreeNode)) { 
-            throw new TypeError('Expected right node to be an instance of BinaryTreeNode or null/undefined');
-        } else {
-            this.setRight(config.right);
-        }
-
-        // Set up parent
-        this.parent = null;
-
-        // Assign data property
-        this.data = config.data;
-    }
-
-    setLeft(node) {
-        if (!(node instanceof BinaryTreeNode) && node !== null) throw new Error('Expected the left node to be an instance of a "BinaryTreeNode"');
-
-        // Clean up pointers
-        if (this.left) {
-            this.left.parent = null;
-        }
-
-        if (node === null) {
-            this.left = null;
-            return;
-        }
-
-        if (node.parent) {
-            if (node.parent.left === node) {
-                node.parent.left = null;
-            } else {
-                node.parent.right = null;
-            }
-        }
-
-        // Set up pointers
-        this.left = node;
-        node.parent = this;
-    }
-
-    setRight(node) {
-        if (!(node instanceof BinaryTreeNode) && node !== null) throw new Error('Expected the right node to be an instance of a "BinaryTreeNode"');
-
-        // Clean up pointers
-        if (this.right) {
-            this.right.parent = null;
-        }
-
-        if (node === null) {
-            this.right = null;
-            return;
-        }
-
-        if (node.parent) {
-            if (node.parent.left === node) {
-                node.parent.left = null;
-            } else {
-                node.parent.right = null;
-            }
-        }
-
-        // Set up pointers
-        this.right = node;
-        node.parent = this;
-    }
-}
+// TODO: add binary tree methods 
+// TODO (FUTURE): extend this to have a balancing mechanism (new class)
