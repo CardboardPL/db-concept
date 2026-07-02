@@ -17,4 +17,8 @@ class SelfBalancingBinaryTree {
 
         // TODO: Create balancing mechanism
     }
+
+    #balanceTree() {
+        
+    }
 }
