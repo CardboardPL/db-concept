@@ -18,6 +18,21 @@ class SelfBalancingBinaryTree {
         // TODO: Create balancing mechanism
     }
 
+    #balanceSubTree(subTreeRoot) {
+        let leftSubTreeHeight = 0;
+        if (subTreeRoot.left) {
+            leftSubTreeHeight = subTreeRoot.left.height;
+        }
+
+        let rightSubTreeHeight = 0;
+        if (subTreeRoot.right) {
+            rightSubTreeHeight = subTreeRoot.right.height;
+        }
+
+        // Handle no rotation needed case
+        if (Math.abs(leftSubTreeHeight - rightSubTreeHeight) <= 1) return;
+    }
+
     #balanceTree() {
         
     }
