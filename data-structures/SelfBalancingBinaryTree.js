@@ -30,7 +30,8 @@ class SelfBalancingBinaryTree {
         }
 
         // Handle no rotation needed case
-        if (Math.abs(leftSubTreeHeight - rightSubTreeHeight) <= 1) return;
+        const balanceFactor = leftSubTreeHeight - rightSubTreeHeight; 
+        if (Math.abs(balanceFactor) <= 1) return;
     }
 
     #balanceTree() {
