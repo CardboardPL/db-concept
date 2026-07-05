@@ -8,7 +8,7 @@ class SelfBalancingBinaryTreeNode extends BinaryTreeNode {
     }
 }
 
-class SelfBalancingBinaryTree {
+export class SelfBalancingBinaryTree {
     #root;
 
     constructor(data, weight) {
