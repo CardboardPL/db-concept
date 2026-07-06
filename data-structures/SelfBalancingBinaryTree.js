@@ -37,4 +37,10 @@ export class SelfBalancingBinaryTree {
     #balanceTree() {
         
     }
+
+    insert(data, weight) {
+        if (data == null) return;
+        
+        // TODO: Find spot to place it
+    }
 }
