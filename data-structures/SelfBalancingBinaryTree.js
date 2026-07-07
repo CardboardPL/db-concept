@@ -38,9 +38,38 @@ export class SelfBalancingBinaryTree {
         
     }
 
+    // TODO: work on the rotation logic to balance the tree after setting the node's values
     insert(data, weight) {
         if (data == null) return;
-        
-        // TODO: Find spot to place it
+        weight = weight == null ? data : weight;
+        const node = new SelfBalancingBinaryTreeNode(data, weight);
+
+        // Create a root if necessary
+        if (!this.#root) {
+            this.#root = node;
+            return;
+        }
+
+        // Traverse the tree to place the item to the correct spot
+        let curr = this.#root;
+        while (true) {
+            if (curr.weight > weight) {
+                if (curr.left) {
+                    curr = curr.left;
+                } else {
+                    curr.setLeft(node);
+                    break;
+                }
+            } else if (curr.weight < weight) {
+                if (curr.right) {
+                    curr = curr.right;
+                } else {
+                    curr.setRight(node);
+                    break;
+                }
+            } else {
+                throw new Error(`An element with the weight "${weight}" already exists in the tree`);
+            }
+        }
     }
 }
