@@ -1,6 +1,6 @@
 import { BinaryTreeNode } from "./BinaryTreeNode";
 
-class SelfBalancingBinaryTreeNode extends BinaryTreeNode {
+class AVLTreeNode extends BinaryTreeNode {
     constructor(data, weight, height, left, right) {
         super(data, left, right);
         this.weight = weight;
@@ -8,12 +8,12 @@ class SelfBalancingBinaryTreeNode extends BinaryTreeNode {
     }
 }
 
-export class SelfBalancingBinaryTree {
+export class AVLTree {
     #root;
 
     constructor(data, weight) {
         if (data == null) return;
-        this.#root = new SelfBalancingBinaryTreeNode(data, weight);
+        this.#root = new AVLTreeNode(data, weight);
 
         // TODO: Create balancing mechanism
     }
@@ -42,7 +42,7 @@ export class SelfBalancingBinaryTree {
     insert(data, weight) {
         if (data == null) return;
         weight = weight == null ? data : weight;
-        const node = new SelfBalancingBinaryTreeNode(data, weight);
+        const node = new AVLTreeNode(data, weight);
 
         // Create a root if necessary
         if (!this.#root) {
