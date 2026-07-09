@@ -19,15 +19,8 @@ export class AVLTree {
     }
 
     #balanceSubTree(subTreeRoot) {
-        let leftSubTreeHeight = 0;
-        if (subTreeRoot.left) {
-            leftSubTreeHeight = subTreeRoot.left.height;
-        }
-
-        let rightSubTreeHeight = 0;
-        if (subTreeRoot.right) {
-            rightSubTreeHeight = subTreeRoot.right.height;
-        }
+        const leftSubTreeHeight = subTreeRoot.left ? subTreeRoot.left.height : 0;
+        const rightSubTreeHeight = subTreeRoot.right ? subTreeRoot.right.height : 0;
 
         // Handle no rotation needed case
         const balanceFactor = leftSubTreeHeight - rightSubTreeHeight; 
