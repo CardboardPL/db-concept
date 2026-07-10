@@ -23,8 +23,11 @@ export class AVLTree {
         const rightSubTreeHeight = subTreeRoot.right ? subTreeRoot.right.height : 0;
 
         // Handle no rotation needed case
-        const balanceFactor = leftSubTreeHeight - rightSubTreeHeight; 
+        const balanceFactor = leftSubTreeHeight - rightSubTreeHeight;
         if (Math.abs(balanceFactor) <= 1) return;
+        const isLeftHeavy = balanceFactor > 0;
+
+        // TODO: implement left rotation logic
     }
 
     #balanceTree() {
