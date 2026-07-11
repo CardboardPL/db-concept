@@ -18,6 +18,34 @@ export class AVLTree {
         // TODO: Create balancing mechanism
     }
 
+    // TODO: try and figure out how to update heights
+    // TODO: test in different cases
+    // TODO: implement right rotation
+    #rotateLeft(root) {
+        const right = root.right;
+
+        // Normalize the bend
+        const pivot = right.left;
+        if (pivot) {
+            root.setRight(pivot);
+            pivot.setRight(right);
+        }
+
+        // Perform a left rotation
+        if (root.parent) {
+            const rightNode = root.right;
+            root.parent.setRight(rightNode);
+            rightNode.setLeft(root);
+        } else {
+            this.#root = root.right;
+            root.right.setLeft(root);
+        }
+    }
+
+    #rotateRight(root) {
+        
+    }
+
     #balanceSubTree(root) {
         const leftSubTreeHeight = root.left ? root.left.height : 0;
         const rightSubTreeHeight = root.right ? root.right.height : 0;
@@ -26,8 +54,6 @@ export class AVLTree {
         const balanceFactor = leftSubTreeHeight - rightSubTreeHeight;
         if (Math.abs(balanceFactor) <= 1) return;
         const isLeftHeavy = balanceFactor > 0;
-
-        // TODO: implement left rotation logic
     }
 
     #balanceTree() {
