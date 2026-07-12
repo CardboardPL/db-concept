@@ -20,7 +20,6 @@ export class AVLTree {
 
     // TODO: try and figure out how to update heights
     // TODO: test in different cases
-    // TODO: implement right rotation
     #rotateLeft(root) {
         const right = root.right;
 
@@ -32,18 +31,35 @@ export class AVLTree {
         }
 
         // Perform a left rotation
+        const newRight = root.right;
         if (root.parent) {
-            const rightNode = root.right;
-            root.parent.setRight(rightNode);
-            rightNode.setLeft(root);
+            root.parent.setRight(newRight);
+            newRight.setLeft(root);
         } else {
-            this.#root = root.right;
-            root.right.setLeft(root);
+            this.#root = newRight;
+            newRight.setLeft(root);
         }
     }
 
     #rotateRight(root) {
-        
+        const left = root.left;
+
+        // Normalize the bend
+        const pivot = left.right;
+        if (pivot) {
+            root.setLeft(pivot);
+            pivot.setLeft(left);
+        }
+
+        // Perform a right rotation
+        const newLeft = root.left;
+        if (root.parent) {
+            root.parent.setLeft(newLeft);
+            newLeft.setRight(root);
+        } else {
+            this.#root = newLeft;
+            newLeft.setRight(root);
+        }
     }
 
     #balanceSubTree(root) {
