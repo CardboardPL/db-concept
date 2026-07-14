@@ -23,21 +23,30 @@ export class AVLTree {
     #rotateLeft(root) {
         const right = root.right;
 
-        // Normalize the bend
+        // Normalize the bend or determine if it will have an orphan node
+        let hasOrphanNode = false;
         const pivot = right.left;
         if (pivot) {
-            root.setRight(pivot);
-            pivot.setRight(right);
+            if (!right.right) {
+                root.setRight(pivot);
+                pivot.setRight(right);
+            } else {
+                hasOrphanNode = true;
+            }
         }
 
         // Perform a left rotation
         const newRight = root.right;
         if (root.parent) {
             root.parent.setRight(newRight);
-            newRight.setLeft(root);
         } else {
             this.#root = newRight;
-            newRight.setLeft(root);
+        }
+        newRight.setLeft(root);
+
+        // Reattach orphan node if any
+        if (hasOrphanNode) {
+            root.setRight(pivot);
         }
     }
 
