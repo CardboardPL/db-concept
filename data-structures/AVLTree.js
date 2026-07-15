@@ -20,7 +20,7 @@ export class AVLTree {
 
     // TODO: try and figure out how to update heights
     // TODO: test in different cases
-    #rotateLeft(root) {
+    #handleRightImbalance(root) {
         const right = root.right;
 
         // Normalize the bend or determine if it will have an orphan node
