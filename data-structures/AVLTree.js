@@ -50,7 +50,7 @@ export class AVLTree {
         }
     }
 
-    #rotateRight(root) {
+    #handleLeftImbalance(root) {
         const left = root.left;
 
         // Normalize the bend
