@@ -53,21 +53,30 @@ export class AVLTree {
     #handleLeftImbalance(root) {
         const left = root.left;
 
-        // Normalize the bend
+        // Normalize the bend or determine if it will have an orphan node
+        let hasOrphanNode = false;
         const pivot = left.right;
         if (pivot) {
-            root.setLeft(pivot);
-            pivot.setLeft(left);
+            if (!left.left) {
+                root.setLeft(pivot);
+                pivot.setLeft(left);
+            } else {
+                hasOrphanNode = true;
+            }
         }
 
         // Perform a right rotation
         const newLeft = root.left;
         if (root.parent) {
             root.parent.setLeft(newLeft);
-            newLeft.setRight(root);
         } else {
             this.#root = newLeft;
-            newLeft.setRight(root);
+        }
+        newLeft.setRight(root);
+
+        // Reattach orphan node if any
+        if (hasOrphanNode) {
+            root.setLeft(pivot);
         }
     }
 
