@@ -19,7 +19,7 @@ export class AVLTree {
     }
 
     // TODO: try and figure out how to update heights
-    // TODO: test in different cases
+    // TODO: test in different cases (look at double rotation cases)
     #handleRightImbalance(root) {
         const right = root.right;
 
@@ -87,7 +87,12 @@ export class AVLTree {
         // Handle no rotation needed case
         const balanceFactor = leftSubTreeHeight - rightSubTreeHeight;
         if (Math.abs(balanceFactor) <= 1) return;
-        const isLeftHeavy = balanceFactor > 0;
+
+        if (balanceFactor > 0) {
+            this.#handleLeftImbalance(root);
+        } else {
+            this.#handleRightImbalance(root);
+        }
     }
 
     #balanceTree() {
