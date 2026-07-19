@@ -20,6 +20,7 @@ export class AVLTree {
 
     // TODO: try and figure out how to update heights
     // TODO: test in different cases (look at double rotation cases)
+    // TODO: split up rotations into independent methods
     #handleRightImbalance(root) {
         const right = root.right;
 
@@ -48,6 +49,8 @@ export class AVLTree {
         if (hasOrphanNode) {
             root.setRight(pivot);
         }
+
+        return newRight;
     }
 
     #handleLeftImbalance(root) {
@@ -78,6 +81,8 @@ export class AVLTree {
         if (hasOrphanNode) {
             root.setLeft(pivot);
         }
+
+        return newLeft;
     }
 
     #balanceSubTree(root) {
@@ -88,15 +93,11 @@ export class AVLTree {
         const balanceFactor = leftSubTreeHeight - rightSubTreeHeight;
         if (Math.abs(balanceFactor) <= 1) return;
 
-        if (balanceFactor > 0) {
-            this.#handleLeftImbalance(root);
-        } else {
-            this.#handleRightImbalance(root);
-        }
+        return balanceFactor > 0 ? this.#handleLeftImbalance(root) : this.#handleRightImbalance(root);
     }
 
     #balanceTree() {
-        
+
     }
 
     // TODO: work on the rotation logic to balance the tree after setting the node's values
