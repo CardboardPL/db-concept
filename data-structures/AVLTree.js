@@ -18,6 +18,12 @@ export class AVLTree {
         // TODO: Create balancing mechanism
     }
 
+    #updateSubTreeHeight(root) {
+        const leftSubTreeHeight = root.left ? root.left.height : 0;
+        const rightSubTreeHeight = root.right ? root.right.height : 0;
+        root.height = Math.max(leftSubTreeHeight, rightSubTreeHeight) + 1;
+    }
+
     // TODO: try and figure out how to update heights
     // TODO: test in different cases (look at double rotation cases)
     // TODO: split up rotations into independent methods
