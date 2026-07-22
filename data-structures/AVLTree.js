@@ -83,6 +83,10 @@ export class AVLTree {
             if (!left.left) {
                 root.setLeft(pivot);
                 pivot.setLeft(left);
+
+                this.#updateSubTreeHeight(left);
+                this.#updateSubTreeHeight(pivot);
+                this.#updateSubTreeHeight(root);
             } else {
                 hasOrphanNode = true;
             }
@@ -90,8 +94,9 @@ export class AVLTree {
 
         // Perform a right rotation
         const newLeft = root.left;
-        if (root.parent) {
-            root.parent.setLeft(newLeft);
+        const parent = root.parent;
+        if (parent) {
+            parent.setLeft(newLeft);
         } else {
             this.#root = newLeft;
         }
@@ -100,6 +105,15 @@ export class AVLTree {
         // Reattach orphan node if any
         if (hasOrphanNode) {
             root.setLeft(pivot);
+        }
+
+        // Update Heights
+        this.#updateSubTreeHeight(newLeft.left);
+        this.#updateSubTreeHeight(newLeft.right);
+        this.#updateSubTreeHeight(newLeft);
+        
+        if (parent) {
+            this.#updateSubTreeHeight(parent);
         }
 
         return newLeft;
