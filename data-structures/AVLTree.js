@@ -24,6 +24,12 @@ export class AVLTree {
         root.height = Math.max(leftSubTreeHeight, rightSubTreeHeight) + 1;
     }
 
+    #calculateBalanceFactor(root) {
+        const leftSubTreeHeight = root.left ? root.left.height : 0;
+        const rightSubTreeHeight = root.right ? root.right.height : 0;
+        return leftSubTreeHeight - rightSubTreeHeight;
+    }
+
     // TODO: try and figure out how to update heights
     // TODO: test in different cases (look at double rotation cases)
     // TODO: split up rotations into independent methods
@@ -120,11 +126,7 @@ export class AVLTree {
     }
 
     #balanceSubTree(root) {
-        const leftSubTreeHeight = root.left ? root.left.height : 0;
-        const rightSubTreeHeight = root.right ? root.right.height : 0;
-
-        // Handle no rotation needed case
-        const balanceFactor = leftSubTreeHeight - rightSubTreeHeight;
+        const balanceFactor = this.#calculateBalanceFactor(root);
         if (Math.abs(balanceFactor) <= 1) return;
 
         return balanceFactor > 0 ? this.#handleLeftImbalance(root) : this.#handleRightImbalance(root);
