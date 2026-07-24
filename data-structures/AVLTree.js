@@ -42,6 +42,9 @@ export class AVLTree {
         if (pivot) {
             if (!right.right) {
                 root.setRight(pivot);
+                if (pivot.right) {
+                    right.setLeft(pivot.right);
+                }
                 pivot.setRight(right);
                 this.#updateSubTreeHeight(right);
                 this.#updateSubTreeHeight(pivot);
@@ -88,8 +91,10 @@ export class AVLTree {
         if (pivot) {
             if (!left.left) {
                 root.setLeft(pivot);
+                if (pivot.left) {
+                    left.setRight(pivot.left);
+                }
                 pivot.setLeft(left);
-
                 this.#updateSubTreeHeight(left);
                 this.#updateSubTreeHeight(pivot);
                 this.#updateSubTreeHeight(root);
