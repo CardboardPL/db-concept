@@ -30,6 +30,34 @@ export class AVLTree {
         return leftSubTreeHeight - rightSubTreeHeight;
     }
 
+    #rotateLeft(newRoot) {
+        const parent = newRoot.parent;
+        if (newRoot.left) {
+            parent.setRight(newRoot.left);
+        }
+        newRoot.setLeft(parent);
+
+        // Update heights
+        this.#updateSubTreeHeight(parent);
+        this.#updateSubTreeHeight(newRoot);
+
+        return newRoot;
+    }
+
+    #rotateRight(newRoot) {
+        const parent = newRoot.parent;
+        if (newRoot.right) {
+            parent.setLeft(newRoot.right);
+        }
+        newRoot.setRight(parent);
+
+        // Update heights
+        this.#updateSubTreeHeight(parent);
+        this.#updateSubTreeHeight(newRoot);
+
+        return newRoot;
+    }
+
     // TODO: try and figure out how to update heights
     // TODO: test in different cases (look at double rotation cases)
     // TODO: split up rotations into independent methods
@@ -92,7 +120,7 @@ export class AVLTree {
             if (!left.left) {
                 root.setLeft(pivot);
                 if (pivot.left) {
-                    left.setRight(pivot.left);
+                    left.setRight(pivot.left);  
                 }
                 pivot.setLeft(left);
                 this.#updateSubTreeHeight(left);
