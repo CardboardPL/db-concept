@@ -32,6 +32,20 @@ export class AVLTree {
 
     #rotateLeft(newRoot) {
         const parent = newRoot.parent;
+        const grandfather = parent.parent;
+
+        // Attach newRoot to its new parent
+        if (grandfather) {
+            if (grandfather.left === parent) {
+                grandfather.setLeft(newRoot);
+            } else {
+                grandfather.setRight(newRoot);
+            }
+        } else {
+            this.#root = newRoot;
+        }
+
+        // Manage the pointers for the nodes that became orphaned
         if (newRoot.left) {
             parent.setRight(newRoot.left);
         }
@@ -46,6 +60,20 @@ export class AVLTree {
 
     #rotateRight(newRoot) {
         const parent = newRoot.parent;
+        const grandfather = parent.parent;
+
+        // Attach newRoot to its new parent
+        if (grandfather) {
+            if (grandfather.left === parent) {
+                grandfather.setLeft(newRoot);
+            } else {
+                grandfather.setRight(newRoot);
+            }
+        } else {
+            this.#root = newRoot;
+        }
+
+        // Manage the pointers for the nodes that became orphaned
         if (newRoot.right) {
             parent.setLeft(newRoot.right);
         }
