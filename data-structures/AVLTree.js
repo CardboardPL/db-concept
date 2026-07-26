@@ -30,16 +30,16 @@ export class AVLTree {
         return leftSubTreeHeight - rightSubTreeHeight;
     }
 
-    #rotateLeft(newRoot) {
-        const parent = newRoot.parent;
-        const grandfather = parent.parent;
+    #rotateLeft(initialRoot) {
+        const newRoot = initialRoot.right;
+        const grandParent = initialRoot.parent;
 
         // Attach newRoot to its new parent
-        if (grandfather) {
-            if (grandfather.left === parent) {
-                grandfather.setLeft(newRoot);
+        if (grandParent) {
+            if (grandParent.left === initialRoot) {
+                grandParent.setLeft(newRoot);
             } else {
-                grandfather.setRight(newRoot);
+                grandParent.setRight(newRoot);
             }
         } else {
             this.#root = newRoot;
@@ -47,27 +47,27 @@ export class AVLTree {
 
         // Manage the pointers for the nodes that became orphaned
         if (newRoot.left) {
-            parent.setRight(newRoot.left);
+            initialRoot.setRight(newRoot.left);
         }
-        newRoot.setLeft(parent);
+        newRoot.setLeft(initialRoot);
 
         // Update heights
-        this.#updateSubTreeHeight(parent);
+        this.#updateSubTreeHeight(initialRoot);
         this.#updateSubTreeHeight(newRoot);
 
         return newRoot;
     }
 
-    #rotateRight(newRoot) {
-        const parent = newRoot.parent;
-        const grandfather = parent.parent;
+    #rotateRight(initialRoot) {
+        const newRoot = initialRoot.left;
+        const grandParent = initialRoot.parent;
 
         // Attach newRoot to its new parent
-        if (grandfather) {
-            if (grandfather.left === parent) {
-                grandfather.setLeft(newRoot);
+        if (grandParent) {
+            if (grandParent.left === initialRoot) {
+                grandParent.setLeft(newRoot);
             } else {
-                grandfather.setRight(newRoot);
+                grandParent.setRight(newRoot);
             }
         } else {
             this.#root = newRoot;
@@ -75,12 +75,12 @@ export class AVLTree {
 
         // Manage the pointers for the nodes that became orphaned
         if (newRoot.right) {
-            parent.setLeft(newRoot.right);
+            initialRoot.setLeft(newRoot.right);
         }
-        newRoot.setRight(parent);
+        newRoot.setRight(initialRoot);
 
         // Update heights
-        this.#updateSubTreeHeight(parent);
+        this.#updateSubTreeHeight(initialRoot);
         this.#updateSubTreeHeight(newRoot);
 
         return newRoot;
