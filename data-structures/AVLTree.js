@@ -86,104 +86,24 @@ export class AVLTree {
         return newRoot;
     }
 
-    // TODO: try and figure out how to update heights
-    // TODO: test in different cases (look at double rotation cases)
-    // TODO: split up rotations into independent methods
     #handleRightImbalance(root) {
         const right = root.right;
 
-        // Normalize the bend or determine if it will have an orphan node
-        let hasOrphanNode = false;
-        const pivot = right.left;
-        if (pivot) {
-            if (!right.right) {
-                root.setRight(pivot);
-                if (pivot.right) {
-                    right.setLeft(pivot.right);
-                }
-                pivot.setRight(right);
-                this.#updateSubTreeHeight(right);
-                this.#updateSubTreeHeight(pivot);
-                this.#updateSubTreeHeight(root);
-            } else {
-                hasOrphanNode = true;
-            }
+        // Normalize the bend
+        if (right.left && !right.right) {
+            this.#rotateRight(right);
         }
-
-        // Perform a left rotation
-        const newRight = root.right;
-        const parent = root.parent;
-        if (parent) {
-            parent.setRight(newRight);
-        } else {
-            this.#root = newRight;
-        }
-        newRight.setLeft(root);
-
-        // Reattach orphan node if any
-        if (hasOrphanNode) {
-            root.setRight(pivot);
-        }
-
-        // Update Heights
-        this.#updateSubTreeHeight(newRight.left);
-        this.#updateSubTreeHeight(newRight.right);
-        this.#updateSubTreeHeight(newRight);
-
-        if (parent) {
-            this.#updateSubTreeHeight(parent);
-        }
-        
-
-        return newRight;
+        return this.#rotateLeft(root);
     }
 
     #handleLeftImbalance(root) {
         const left = root.left;
 
-        // Normalize the bend or determine if it will have an orphan node
-        let hasOrphanNode = false;
-        const pivot = left.right;
-        if (pivot) {
-            if (!left.left) {
-                root.setLeft(pivot);
-                if (pivot.left) {
-                    left.setRight(pivot.left);  
-                }
-                pivot.setLeft(left);
-                this.#updateSubTreeHeight(left);
-                this.#updateSubTreeHeight(pivot);
-                this.#updateSubTreeHeight(root);
-            } else {
-                hasOrphanNode = true;
-            }
+        // Normalize the bend
+        if (left.right && !left.left) {
+            this.#rotateLeft(left);
         }
-
-        // Perform a right rotation
-        const newLeft = root.left;
-        const parent = root.parent;
-        if (parent) {
-            parent.setLeft(newLeft);
-        } else {
-            this.#root = newLeft;
-        }
-        newLeft.setRight(root);
-
-        // Reattach orphan node if any
-        if (hasOrphanNode) {
-            root.setLeft(pivot);
-        }
-
-        // Update Heights
-        this.#updateSubTreeHeight(newLeft.left);
-        this.#updateSubTreeHeight(newLeft.right);
-        this.#updateSubTreeHeight(newLeft);
-        
-        if (parent) {
-            this.#updateSubTreeHeight(parent);
-        }
-
-        return newLeft;
+        return this.#rotateRight(root);
     }
 
     #balanceSubTree(root) {
