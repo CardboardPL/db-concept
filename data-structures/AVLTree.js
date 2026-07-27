@@ -14,8 +14,6 @@ export class AVLTree {
     constructor(data, weight) {
         if (data == null) return;
         this.#root = new AVLTreeNode(data, weight);
-
-        // TODO: Create balancing mechanism
     }
 
     #updateSubTreeHeight(root) {
@@ -25,6 +23,7 @@ export class AVLTree {
     }
 
     #calculateBalanceFactor(root) {
+        if (!root) return 0;
         const leftSubTreeHeight = root.left ? root.left.height : 0;
         const rightSubTreeHeight = root.right ? root.right.height : 0;
         return leftSubTreeHeight - rightSubTreeHeight;
@@ -106,15 +105,42 @@ export class AVLTree {
         return this.#rotateRight(root);
     }
 
-    #balanceSubTree(root) {
-        const balanceFactor = this.#calculateBalanceFactor(root);
-        if (Math.abs(balanceFactor) <= 1) return;
+    #balanceTree(start) {
+        /* flow: 
+            check if the children are balanced:
+            - Yes: Move onto the next step
+            - No: Set curr to the imbalanced child (first) and repeat from the start
 
-        return balanceFactor > 0 ? this.#handleLeftImbalance(root) : this.#handleRightImbalance(root);
-    }
+            check if the current node is balanced:
+            - Yes: move up
+            - No: rotate and then repeat the process
 
-    #balanceTree() {
+            -> keep going until curr is null
+        */
 
+        let curr = start;
+        while (curr) {
+            const left = curr.left;
+            const right = curr.right;
+
+            if (!(Math.abs(this.#calculateBalanceFactor(left)) <= 1)) {
+                curr = left;
+                continue;
+            }
+
+            if (!(Math.abs(this.#calculateBalanceFactor(right)) <= 1)) {
+                curr = right;
+                continue;
+            }
+            
+            const currBalanceFactor = this.#calculateBalanceFactor(curr);
+            if (Math.abs(currBalanceFactor) <= 1) {
+                this.#updateSubTreeHeight(curr);
+                curr = curr.parent;
+            } else {
+                curr = currBalanceFactor > 0 ? this.#handleLeftImbalance(curr) : this.#handleRightImbalance(curr);
+            }
+        }
     }
 
     // TODO: work on the rotation logic to balance the tree after setting the node's values
