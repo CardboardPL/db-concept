@@ -45,9 +45,7 @@ export class AVLTree {
         }
 
         // Manage the pointers for the nodes that became orphaned
-        if (newRoot.left) {
-            initialRoot.setRight(newRoot.left);
-        }
+        initialRoot.setRight(newRoot.left);
         newRoot.setLeft(initialRoot);
 
         // Update heights
@@ -73,9 +71,7 @@ export class AVLTree {
         }
 
         // Manage the pointers for the nodes that became orphaned
-        if (newRoot.right) {
-            initialRoot.setLeft(newRoot.right);
-        }
+        initialRoot.setLeft(newRoot.right);
         newRoot.setRight(initialRoot);
 
         // Update heights
