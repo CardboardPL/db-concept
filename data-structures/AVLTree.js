@@ -143,7 +143,7 @@ export class AVLTree {
     insert(data, weight) {
         if (data == null) return;
         weight = weight == null ? data : weight;
-        const node = new AVLTreeNode(data, weight);
+        const node = new AVLTreeNode(data, weight, 1);
 
         // Create a root if necessary
         if (!this.#root) {
@@ -172,5 +172,6 @@ export class AVLTree {
                 throw new Error(`An element with the weight "${weight}" already exists in the tree`);
             }
         }
+        this.#balanceTree(curr);
     }
 }
