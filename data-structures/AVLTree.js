@@ -101,6 +101,7 @@ export class AVLTree {
         return this.#rotateRight(root);
     }
 
+    // TODO: optimize this
     #balanceTree(start) {
         /* flow: 
             check if the children are balanced:
@@ -139,7 +140,6 @@ export class AVLTree {
         }
     }
 
-    // TODO: work on the rotation logic to balance the tree after setting the node's values
     insert(data, weight) {
         if (data == null) return;
         weight = weight == null ? data : weight;
