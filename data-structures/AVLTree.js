@@ -174,4 +174,18 @@ export class AVLTree {
         }
         this.#balanceTree(curr);
     }
+
+    getData(weight) {
+        let curr = this.#root;
+        while (curr) {
+            if (curr.weight === weight) {
+                return curr.data;
+            } else if (weight > curr.weight) {
+                curr = curr.right;
+            } else {
+                curr = curr.left;
+            }
+        }
+        return null;
+    }
 }
