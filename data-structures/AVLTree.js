@@ -29,7 +29,6 @@ export class AVLTree {
         return leftSubTreeHeight - rightSubTreeHeight;
     }
 
-    // TODO: inspect rotation logic so that the inner middle child is always the root of the rotated subtree. (note: verify this)
     #rotateLeft(initialRoot) {
         const newRoot = initialRoot.right;
         const grandParent = initialRoot.parent;
@@ -86,7 +85,7 @@ export class AVLTree {
         const right = root.right;
 
         // Normalize the bend
-        if (right.left && !right.right) {
+        if (this.#calculateBalanceFactor(right) > 0) {
             this.#rotateRight(right);
         }
         return this.#rotateLeft(root);
@@ -96,7 +95,7 @@ export class AVLTree {
         const left = root.left;
 
         // Normalize the bend
-        if (left.right && !left.left) {
+        if (this.#calculateBalanceFactor(left) < 0) {
             this.#rotateLeft(left);
         }
         return this.#rotateRight(root);
@@ -122,28 +121,23 @@ export class AVLTree {
             const right = curr.right;
             
             if (!(Math.abs(this.#calculateBalanceFactor(left)) <= 1)) {
-                console.log(left, 'is imbalanced');
                 curr = left;
                 continue;
             }
 
             if (!(Math.abs(this.#calculateBalanceFactor(right)) <= 1)) {
-                console.log(right, 'is imbalanced');
                 curr = right;
                 continue;
             }
             
             const currBalanceFactor = this.#calculateBalanceFactor(curr);
             if (Math.abs(currBalanceFactor) <= 1) {
-                console.log(curr.data);
                 this.#updateSubTreeHeight(curr);
                 curr = curr.parent;
             } else {
-                console.log(curr, 'is imbalanced');
                 curr = currBalanceFactor > 0 ? this.#handleLeftImbalance(curr) : this.#handleRightImbalance(curr);
             }
         }
-        console.log('balanced');
     }
 
     insert(data, weight) {
@@ -195,11 +189,3 @@ export class AVLTree {
         return null;
     }
 }
-
-const tree = new AVLTree();
-const values = [10, 100, 20, 90, 30, 80];
-
-for (const value of values) {
-    tree.insert(value);
-}
-console.log(tree);
