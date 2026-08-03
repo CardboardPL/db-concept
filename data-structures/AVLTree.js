@@ -188,4 +188,19 @@ export class AVLTree {
         }
         return null;
     }
+
+    updateData(weight, newData) {
+        let curr = this.#root;
+        while (curr) {
+            if (curr.weight === weight) {
+                curr.data = newData;
+                return true;
+            } else if (weight > curr.weight) {
+                curr = curr.right;
+            } else {
+                curr = curr.left;
+            }
+        }
+        return false;
+    }
 }
