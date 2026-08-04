@@ -140,15 +140,15 @@ export class AVLTree {
         }
     }
 
-    insert(data, weight) {
-        if (data == null) return;
-        weight = weight == null ? data : weight;
+    insert(weight, data) {
+        if (weight == null) return false;
+        data = data == null ? weight : data;
         const node = new AVLTreeNode(data, weight, 1);
 
         // Create a root if necessary
         if (!this.#root) {
             this.#root = node;
-            return;
+            return true;
         }
 
         // Traverse the tree to place the item to the correct spot
@@ -173,6 +173,7 @@ export class AVLTree {
             }
         }
         this.#balanceTree(curr);
+        return true;
     }
 
     getData(weight) {
