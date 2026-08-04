@@ -203,4 +203,68 @@ export class AVLTree {
         }
         return false;
     }
+
+    delete(weight) {
+        // find node to delete
+        let curr = this.#root;
+        while (curr) {
+            const currWeight = curr.weight;
+            if (currWeight === weight) {
+                break;
+            } else if (weight > currWeight) {
+                curr = curr.right;
+            } else {
+                curr = curr.left;
+            }
+        }
+
+        // Return early if match wasn't found
+        if (curr === null) return false;
+
+        // Handle 0 or 1 child case
+        const currParent = curr.parent;
+        if (!curr.right) {
+            if (!currParent) {
+                this.#root = curr.left;
+                if (curr.left) curr.left.parent = null;
+            } else {
+                if (currParent.left === curr) {
+                    currParent.setLeft(curr.left);
+                } else {
+                    currParent.setRight(curr.left);
+                }
+                
+                this.#updateSubTreeHeight(currParent);
+                this.#balanceTree(currParent);
+            }
+            return true;
+        }
+
+        // Find the in-order successor
+        let toOverwrite = curr;
+        curr = curr.right;
+        while (curr) {
+            if (curr.left) {
+                curr = curr.left
+            } else {
+                // overwrite the node to be overwritten to have the in-order successor's data
+                toOverwrite.data = curr.data;
+                toOverwrite.weight = curr.weight;
+                
+                // unlink the leaf node where the in-order successor lived
+                const parent = curr.parent;
+                if (parent.left === curr) {
+                    parent.setLeft(curr.right);
+                } else {
+                    parent.setRight(curr.right);
+                }
+
+                // rebalance tree
+                this.#updateSubTreeHeight(parent);
+                this.#balanceTree(parent);
+
+                return true;
+            }
+        }
+    }
 }
