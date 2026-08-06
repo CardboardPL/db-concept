@@ -101,35 +101,9 @@ export class AVLTree {
         return this.#rotateRight(root);
     }
 
-    // TODO: optimize this
     #balanceTree(start) {
-        /* flow: 
-            check if the children are balanced:
-            - Yes: Move onto the next step
-            - No: Set curr to the imbalanced child (first) and repeat from the start
-
-            check if the current node is balanced:
-            - Yes: move up
-            - No: rotate and then repeat the process
-
-            -> keep going until curr is null
-        */
-
         let curr = start;
-        while (curr) {
-            const left = curr.left;
-            const right = curr.right;
-            
-            if (!(Math.abs(this.#calculateBalanceFactor(left)) <= 1)) {
-                curr = left;
-                continue;
-            }
-
-            if (!(Math.abs(this.#calculateBalanceFactor(right)) <= 1)) {
-                curr = right;
-                continue;
-            }
-            
+        while (curr) {            
             const currBalanceFactor = this.#calculateBalanceFactor(curr);
             if (Math.abs(currBalanceFactor) <= 1) {
                 this.#updateSubTreeHeight(curr);
@@ -220,7 +194,7 @@ export class AVLTree {
         }
 
         // Return early if match wasn't found
-        if (curr === null) return false;
+        if (curr == null) return false;
 
         // Handle 0 or 1 child case
         const currParent = curr.parent;
