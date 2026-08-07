@@ -14,7 +14,7 @@ export class AVLTree {
     constructor(weight, data) {
         if (weight == null) return;
         data = data == null ? weight : data;
-        this.#root = new AVLTreeNode(data, weight);
+        this.#root = new AVLTreeNode(data, weight, 1);
     }
 
     #updateSubTreeHeight(root) {
