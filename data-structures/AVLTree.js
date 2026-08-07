@@ -199,15 +199,17 @@ export class AVLTree {
 
         // Handle 0 or 1 child case
         const currParent = curr.parent;
-        if (!curr.right) {
+        if (!curr.left || !curr.right) {
+            const child = curr.left ? curr.left : curr.right;
+
             if (!currParent) {
-                this.#root = curr.left;
-                if (curr.left) curr.left.parent = null;
+                this.#root = child;
+                if (child) child.parent = null;
             } else {
                 if (currParent.left === curr) {
-                    currParent.setLeft(curr.left);
+                    currParent.setLeft(child);
                 } else {
-                    currParent.setRight(curr.left);
+                    currParent.setRight(child);
                 }
                 
                 this.#updateSubTreeHeight(currParent);
