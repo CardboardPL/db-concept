@@ -32,14 +32,14 @@ export class AVLTree {
 
     #rotateLeft(initialRoot) {
         const newRoot = initialRoot.right;
-        const grandParent = initialRoot.parent;
+        const initialRootParent = initialRoot.parent;
 
         // Attach newRoot to its new parent
-        if (grandParent) {
-            if (grandParent.left === initialRoot) {
-                grandParent.setLeft(newRoot);
+        if (initialRootParent) {
+            if (initialRootParent.left === initialRoot) {
+                initialRootParent.setLeft(newRoot);
             } else {
-                grandParent.setRight(newRoot);
+                initialRootParent.setRight(newRoot);
             }
         } else {
             this.#root = newRoot;
@@ -58,14 +58,14 @@ export class AVLTree {
 
     #rotateRight(initialRoot) {
         const newRoot = initialRoot.left;
-        const grandParent = initialRoot.parent;
+        const initialRootParent = initialRoot.parent;
 
         // Attach newRoot to its new parent
-        if (grandParent) {
-            if (grandParent.left === initialRoot) {
-                grandParent.setLeft(newRoot);
+        if (initialRootParent) {
+            if (initialRootParent.left === initialRoot) {
+                initialRootParent.setLeft(newRoot);
             } else {
-                grandParent.setRight(newRoot);
+                initialRootParent.setRight(newRoot);
             }
         } else {
             this.#root = newRoot;
