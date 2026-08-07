@@ -11,8 +11,9 @@ class AVLTreeNode extends BinaryTreeNode {
 export class AVLTree {
     #root;
 
-    constructor(data, weight) {
-        if (data == null) return;
+    constructor(weight, data) {
+        if (weight == null) return;
+        data = data == null ? weight : data;
         this.#root = new AVLTreeNode(data, weight);
     }
 
@@ -216,7 +217,7 @@ export class AVLTree {
         }
 
         // Find the in-order successor
-        let toOverwrite = curr;
+        const toOverwrite = curr;
         curr = curr.right;
         while (curr) {
             if (curr.left) {
