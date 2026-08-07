@@ -212,7 +212,6 @@ export class AVLTree {
                     currParent.setRight(child);
                 }
                 
-                this.#updateSubTreeHeight(currParent);
                 this.#balanceTree(currParent);
             }
             return true;
@@ -238,7 +237,6 @@ export class AVLTree {
                 }
 
                 // rebalance tree
-                this.#updateSubTreeHeight(parent);
                 this.#balanceTree(parent);
 
                 return true;
