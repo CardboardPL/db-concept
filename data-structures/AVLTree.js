@@ -115,6 +115,20 @@ export class AVLTree {
         }
     }
 
+    #findNode(key) {
+        let curr = this.#root;
+        while (curr) {
+            if (curr.key === key) {
+                return curr;
+            } else if (curr.key > key) {
+                curr = curr.left;
+            } else {
+                curr = curr.right;
+            }
+        }
+        return null;
+    }
+
     insert(key, data) {
         if (key == null) return false;
         data = data == null ? key : data;
@@ -152,30 +166,15 @@ export class AVLTree {
     }
 
     getData(key) {
-        let curr = this.#root;
-        while (curr) {
-            if (curr.key === key) {
-                return curr.data;
-            } else if (key > curr.key) {
-                curr = curr.right;
-            } else {
-                curr = curr.left;
-            }
-        }
-        return null;
+        const node = this.#findNode(key);
+        return node ? node.data : null;
     }
 
     updateData(key, newData) {
-        let curr = this.#root;
-        while (curr) {
-            if (curr.key === key) {
-                curr.data = newData;
-                return true;
-            } else if (key > curr.key) {
-                curr = curr.right;
-            } else {
-                curr = curr.left;
-            }
+        const node = this.#findNode(key);
+        if (node) {
+            node.data = newData;
+            return true;
         }
         return false;
     }
