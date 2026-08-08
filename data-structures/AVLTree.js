@@ -1,9 +1,9 @@
 import { BinaryTreeNode } from "./BinaryTreeNode.js";
 
 class AVLTreeNode extends BinaryTreeNode {
-    constructor(data, weight, height, left, right) {
+    constructor(data, key, height, left, right) {
         super(data, left, right);
-        this.weight = weight;
+        this.key = key;
         this.height = height;
     }
 }
@@ -11,10 +11,10 @@ class AVLTreeNode extends BinaryTreeNode {
 export class AVLTree {
     #root;
 
-    constructor(weight, data) {
-        if (weight == null) return;
-        data = data == null ? weight : data;
-        this.#root = new AVLTreeNode(data, weight, 1);
+    constructor(key, data) {
+        if (key == null) return;
+        data = data == null ? key : data;
+        this.#root = new AVLTreeNode(data, key, 1);
     }
 
     #updateSubTreeHeight(root) {
@@ -115,10 +115,10 @@ export class AVLTree {
         }
     }
 
-    insert(weight, data) {
-        if (weight == null) return false;
-        data = data == null ? weight : data;
-        const node = new AVLTreeNode(data, weight, 1);
+    insert(key, data) {
+        if (key == null) return false;
+        data = data == null ? key : data;
+        const node = new AVLTreeNode(data, key, 1);
 
         // Create a root if necessary
         if (!this.#root) {
@@ -129,14 +129,14 @@ export class AVLTree {
         // Traverse the tree to place the item to the correct spot
         let curr = this.#root;
         while (true) {
-            if (curr.weight > weight) {
+            if (curr.key > key) {
                 if (curr.left) {
                     curr = curr.left;
                 } else {
                     curr.setLeft(node);
                     break;
                 }
-            } else if (curr.weight < weight) {
+            } else if (curr.key < key) {
                 if (curr.right) {
                     curr = curr.right;
                 } else {
@@ -144,19 +144,19 @@ export class AVLTree {
                     break;
                 }
             } else {
-                throw new Error(`An element with the weight "${weight}" already exists in the tree`);
+                throw new Error(`An element with the key "${key}" already exists in the tree`);
             }
         }
         this.#balanceTree(curr);
         return true;
     }
 
-    getData(weight) {
+    getData(key) {
         let curr = this.#root;
         while (curr) {
-            if (curr.weight === weight) {
+            if (curr.key === key) {
                 return curr.data;
-            } else if (weight > curr.weight) {
+            } else if (key > curr.key) {
                 curr = curr.right;
             } else {
                 curr = curr.left;
@@ -165,13 +165,13 @@ export class AVLTree {
         return null;
     }
 
-    updateData(weight, newData) {
+    updateData(key, newData) {
         let curr = this.#root;
         while (curr) {
-            if (curr.weight === weight) {
+            if (curr.key === key) {
                 curr.data = newData;
                 return true;
-            } else if (weight > curr.weight) {
+            } else if (key > curr.key) {
                 curr = curr.right;
             } else {
                 curr = curr.left;
@@ -180,14 +180,14 @@ export class AVLTree {
         return false;
     }
 
-    delete(weight) {
+    delete(key) {
         // find node to delete
         let curr = this.#root;
         while (curr) {
-            const currWeight = curr.weight;
-            if (currWeight === weight) {
+            const currKey = curr.key;
+            if (currKey === key) {
                 break;
-            } else if (weight > currWeight) {
+            } else if (key > currKey) {
                 curr = curr.right;
             } else {
                 curr = curr.left;
@@ -226,7 +226,7 @@ export class AVLTree {
             } else {
                 // overwrite the node to be overwritten to have the in-order successor's data
                 toOverwrite.data = curr.data;
-                toOverwrite.weight = curr.weight;
+                toOverwrite.key = curr.key;
                 
                 // unlink the leaf node where the in-order successor lived
                 const parent = curr.parent;
