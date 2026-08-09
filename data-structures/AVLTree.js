@@ -1,6 +1,6 @@
 import { BinaryTreeNode } from "./BinaryTreeNode.js";
 
-class AVLTreeNode extends BinaryTreeNode {
+export class AVLTreeNode extends BinaryTreeNode {
     constructor(data, key, height, left, right) {
         super(data, left, right);
         this.key = key;
