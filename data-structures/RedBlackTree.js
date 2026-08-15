@@ -24,7 +24,35 @@ class RedBlackTree {
      * @returns {Boolean} a boolean representing if a node was inserted or not
      */
     insert(key, data) {
-        
+        const node = new RedBlackTreeNode(key, data, true);
+        if (!this.#root) {
+            this.#root = node;
+            node.isRed = false;
+            return;
+        }
+
+        let curr = this.#root;
+        while (curr) {
+            if (curr.key > key) {
+                if (curr.left) {
+                    curr = curr.left;
+                } else {
+                    curr.setLeft(node);
+                    break;
+                }
+            } else if (curr.key < key) {
+                if (curr.right) {
+                    curr = curr.right;
+                } else {
+                    curr.setRight(node);
+                    break;
+                }
+            } else {
+                throw new Error(`AN element with the key "${key}" already exists in the tree`);
+            }
+        }
+
+        // balance tree starting from curr (assume that the inserted node is red)
     }
 
     /** 
