@@ -21,7 +21,6 @@ class RedBlackTree {
      * Inserts a node into the tree
      * @param {any} key - identifier of the node
      * @param {any} data - data of the node
-     * @returns {Boolean} a boolean representing if a node was inserted or not
      */
     insert(key, data) {
         const node = new RedBlackTreeNode(key, data, true);
