@@ -17,6 +17,14 @@ class RedBlackTree {
         this.#root = new RedBlackTreeNode(key, data, false);
     }
 
+    /** 
+     * Balances the tree by traversing the tree
+     * @param {RedBlackTreeNode} node - starting point of the balancing mechanism
+     */
+    #balanceTree(node) {
+
+    }
+
     /**
      * Inserts a node into the tree
      * @param {any} key - identifier of the node
