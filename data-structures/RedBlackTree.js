@@ -18,10 +18,10 @@ class RedBlackTree {
     }
 
     /** 
-     * Balances the tree by traversing the tree
-     * @param {RedBlackTreeNode} node - starting point of the balancing mechanism
+     * Repairs the tree by looking for violations
+     * @param {RedBlackTreeNode} node - starting point of the repair mechanism
      */
-    #balanceTree(node) {
+    #fixViolations(node) {
 
     }
 
@@ -59,7 +59,8 @@ class RedBlackTree {
             }
         }
 
-        // balance tree starting from curr (assume that the inserted node is red)
+        // Repair the tree
+        this.#fixViolations(curr);
     }
 
     /** 
