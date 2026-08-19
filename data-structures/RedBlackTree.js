@@ -9,7 +9,7 @@ class RedBlackTreeNode extends BinaryTreeNode {
     }
 }
 
-class RedBlackTree {
+export class RedBlackTree {
     #root;
 
     constructor(key, data) {
