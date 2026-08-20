@@ -60,7 +60,7 @@ export class RedBlackTree {
         }
 
         // Repair the tree
-        this.#fixViolations(curr);
+        this.#fixViolations(node);
     }
 
     /** 
