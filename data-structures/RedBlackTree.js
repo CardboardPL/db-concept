@@ -31,13 +31,12 @@ export class RedBlackTree {
      * @param {any} data - data of the node
      */
     insert(key, data) {
-        const node = new RedBlackTreeNode(key, data, true);
         if (!this.#root) {
-            this.#root = node;
-            node.isRed = false;
+            this.#root = new RedBlackTreeNode(key, data, false);
             return;
         }
 
+        const node = new RedBlackTreeNode(key, data, true);
         let curr = this.#root;
         while (curr) {
             if (curr.key > key) {
