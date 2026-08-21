@@ -25,6 +25,17 @@ export class RedBlackTree {
 
     }
 
+    #findNode(key) {
+        let curr = this.#root;
+        while (curr) {
+            if (curr.key === key) {
+                return curr;
+            }
+            curr = curr.key > key ? curr.left : curr.right;
+        }
+        return null;
+    }
+
     /**
      * Inserts a node into the tree
      * @param {any} key - identifier of the node
@@ -68,7 +79,8 @@ export class RedBlackTree {
      * @returns {any} the value of the target node or null if nothing was found
      */
     getData(key) {
-
+        const node = this.#findNode(key);
+        return node ? node.data : null;
     }
 
     /** 
