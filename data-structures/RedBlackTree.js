@@ -88,8 +88,13 @@ export class RedBlackTree {
      * @param {any} key - identifier of the target node
      * @returns {Boolean} a boolean representing if the node's data was updated or not
      */
-    updateData(key) {
-
+    updateData(key, data) {
+        const node = this.#findNode(key);
+        if (node) {
+            node.data = data;
+            return true;
+        }
+        return false;
     }
 
     /** 
