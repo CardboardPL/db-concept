@@ -22,7 +22,31 @@ export class RedBlackTree {
      * @param {RedBlackTreeNode} node - starting point of the repair mechanism
      */
     #fixViolations(node) {
+        if (!node || !node.parent || !node.parent.isRed) {
+            return;
+        }
 
+        let curr = node;
+        while (true) {
+            const parent = curr.parent;
+            if (!parent || !parent.isRed) return;
+
+            const grandParent = parent.parent;
+            const uncle = grandParent.left === parent ? grandParent.right : grandParent.left;
+
+            // Handle second case
+            if (!uncle || !uncle.isRed) {
+                // add code here
+            // Handle first case
+            } else {
+                uncle.isRed = true;
+                parent.isRed = true;
+                if (grandParent !== this.#root) grandParent.isRed = true;
+            }
+
+            // move up
+            curr = grandParent;
+        }
     }
 
     #findNode(key) {
