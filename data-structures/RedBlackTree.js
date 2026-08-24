@@ -89,7 +89,7 @@ export class RedBlackTree {
                     break;
                 }
             } else {
-                throw new Error(`AN element with the key "${key}" already exists in the tree`);
+                throw new Error(`An element with the key "${key}" already exists in the tree`);
             }
         }
 
