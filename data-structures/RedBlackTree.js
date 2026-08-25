@@ -39,8 +39,8 @@ export class RedBlackTree {
                 // add code here
             // Handle first case
             } else {
-                uncle.isRed = true;
-                parent.isRed = true;
+                uncle.isRed = false;
+                parent.isRed = false;
                 if (grandParent !== this.#root) grandParent.isRed = true;
             }
 
