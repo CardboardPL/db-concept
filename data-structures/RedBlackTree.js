@@ -17,6 +17,26 @@ export class RedBlackTree {
         this.#root = new RedBlackTreeNode(key, data, false);
     }
 
+    // Perform a left rotation
+    #rotateLeft() {
+
+    }
+
+    // Perform a right rotation
+    #rotateRight() {
+
+    }
+
+    // Handle rotations and decide if a
+    #handleRotation(curr) {
+        // check for double rotations first
+
+        grandParent.isRed = true;
+        parent.isRed = false;
+
+        // perform correct rotation
+    }
+
     /** 
      * Repairs the tree by looking for violations
      * @param {RedBlackTreeNode} node - starting point of the repair mechanism
@@ -36,7 +56,7 @@ export class RedBlackTree {
 
             // Handle second case
             if (!uncle || !uncle.isRed) {
-                // add code here
+                this.#handleRotation(curr, parent, grandParent, uncle);
             // Handle first case
             } else {
                 uncle.isRed = false;
