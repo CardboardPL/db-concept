@@ -28,7 +28,7 @@ export class RedBlackTree {
     }
 
     // Handle rotations and decide if a
-    #handleRotation(curr) {
+    #handleRotation(curr, parent, grandParent, uncle) {
         // check for double rotations first
 
         grandParent.isRed = true;
