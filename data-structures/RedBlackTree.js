@@ -28,13 +28,31 @@ export class RedBlackTree {
     }
 
     // Handle rotations and decide if a
-    #handleRotations(curr, parent, grandParent, uncle) {
-        // check for double rotations first
-
+    #handleRotations(curr, parent, grandParent) {
         grandParent.isRed = true;
-        parent.isRed = false;
+        let isLeftRotation = false;
+        let pivot = parent;
+        if (grandParent.left === parent) {
+            if (parent.right === curr) {
+                this.#rotateLeft(pivot, curr);
+                pivot = curr;
+                parent.isRed = false;
+            } else {
+                curr.isRed = false;
+            }
+        } else {
+            isLeftRotation = true;
+            if (parent.left === curr) {
+                this.#rotateRight(pivot, curr);
+                pivot = curr;
+                parent.isRed = false;
+            } else {
+                curr.isRed = false;
+            }
+        }
 
         // perform correct rotation
+        isLeftRotation ? this.#rotateLeft(grandParent, pivot) : this.#rotateRight(grandParent, pivot);
     }
 
     /** 
@@ -56,7 +74,7 @@ export class RedBlackTree {
 
             // Handle second case
             if (!uncle || !uncle.isRed) {
-                this.#handleRotations(curr, parent, grandParent, uncle);
+                this.#handleRotations(curr, parent, grandParent);
             // Handle first case
             } else {
                 uncle.isRed = false;
