@@ -27,7 +27,6 @@ export class RedBlackTree {
 
     }
 
-    // Handle rotations and decide if a
     #handleRotations(curr, parent, grandParent) {
         grandParent.isRed = true;
         let isLeftRotation = false;
@@ -36,18 +35,18 @@ export class RedBlackTree {
             if (parent.right === curr) {
                 this.#rotateLeft(pivot, curr);
                 pivot = curr;
-                parent.isRed = false;
-            } else {
                 curr.isRed = false;
+            } else {
+                parent.isRed = false;
             }
         } else {
             isLeftRotation = true;
             if (parent.left === curr) {
                 this.#rotateRight(pivot, curr);
                 pivot = curr;
-                parent.isRed = false;
-            } else {
                 curr.isRed = false;
+            } else {
+                parent.isRed = false;
             }
         }
 
