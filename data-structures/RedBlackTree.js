@@ -18,13 +18,35 @@ export class RedBlackTree {
     }
 
     // Perform a left rotation
-    #rotateLeft() {
+    #rotateLeft(initialRoot, pivot) {
+        const parent = initialRoot.parent;
 
+        if (!parent) {
+            this.#root = pivot;
+        } else if (parent.left === initialRoot) {
+            parent.setLeft(pivot);
+        } else {
+            parent.setRight(pivot);
+        }
+
+        initialRoot.setRight(pivot.left);
+        pivot.setLeft(initialRoot);
     }
 
     // Perform a right rotation
-    #rotateRight() {
+    #rotateRight(initialRoot, pivot) {
+        const parent = initialRoot.parent;
 
+        if (!parent) {
+            this.#root = pivot;
+        } else if (parent.left === initialRoot) {
+            parent.setLeft(pivot);
+        } else {
+            parent.setRight(pivot);
+        }
+
+        initialRoot.setLeft(pivot.right);
+        pivot.setRight(initialRoot);
     }
 
     #handleRotations(curr, parent, grandParent) {
