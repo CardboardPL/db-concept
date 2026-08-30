@@ -31,6 +31,8 @@ export class RedBlackTree {
         grandParent.isRed = true;
         let isLeftRotation = false;
         let pivot = parent;
+
+        // check for preliminary rotations
         if (grandParent.left === parent) {
             if (parent.right === curr) {
                 this.#rotateLeft(pivot, curr);
@@ -50,7 +52,7 @@ export class RedBlackTree {
             }
         }
 
-        // perform correct rotation
+        // perform primary rotation
         isLeftRotation ? this.#rotateLeft(grandParent, pivot) : this.#rotateRight(grandParent, pivot);
     }
 
