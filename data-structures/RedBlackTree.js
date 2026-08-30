@@ -82,7 +82,7 @@ export class RedBlackTree {
      * Repairs the tree by looking for violations
      * @param {RedBlackTreeNode} node - starting point of the repair mechanism
      */
-    #fixViolations(node) {
+    #fixInsertionViolations(node) {
         if (!node || !node.parent || !node.parent.isRed) {
             return;
         }
@@ -155,7 +155,7 @@ export class RedBlackTree {
         }
 
         // Repair the tree
-        this.#fixViolations(node);
+        this.#fixInsertionViolations(node);
     }
 
     /** 
