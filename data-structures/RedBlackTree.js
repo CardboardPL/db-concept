@@ -110,6 +110,10 @@ export class RedBlackTree {
         }
     }
 
+    #fixDeletionViolations(replacedNode, deletedNode) {
+        // write logic for this
+    }
+
     #findNode(key) {
         let curr = this.#root;
         while (curr) {
@@ -188,6 +192,43 @@ export class RedBlackTree {
      * @returns {Boolean} a boolean representing if the node was deleted or not
      */
     delete(key) {
+        const nodeToBeReplaced = this.#findNode(key);
+        if (!nodeToBeReplaced) return false;
         
+        let node = nodeToBeReplaced.right;
+        while (node) {
+            const left = node.left;
+            if (left) {
+                node = left;
+            } else {
+                break;
+            }
+        }
+
+        if (!node) {
+            node = nodeToBeReplaced;
+
+            const parent = node.parent;
+            if (!parent) this.#root = node.left;
+            else if (parent.left === node) {
+                parent.setLeft(node.left);
+            } else {
+                parent.setRight(node.left);
+            }
+        } else {
+            nodeToBeReplaced.key = node.key;
+            nodeToBeReplaced.data = node.data;
+
+            const parent = node.parent;
+            if (parent === nodeToBeReplaced) {
+                parent.setRight(node.right);
+            } else {
+                parent.setLeft(node.right);
+            }
+        }
+
+        // fix
+        this.#fixDeletionViolations(nodeToBeReplaced, node);
+        return true;
     }
 }
