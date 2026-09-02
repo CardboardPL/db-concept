@@ -110,7 +110,7 @@ export class RedBlackTree {
         }
     }
 
-    #fixDeletionViolations(replacedNode, deletedNode) {
+    #fixDeletionViolations(parent, isDeletedNodered) {
         // write logic for this
     }
 
@@ -205,10 +205,11 @@ export class RedBlackTree {
             }
         }
 
+        let parent;
         if (!node) {
             node = nodeToBeReplaced;
 
-            const parent = node.parent;
+            parent = node.parent;
             if (!parent) this.#root = node.left;
             else if (parent.left === node) {
                 parent.setLeft(node.left);
@@ -219,7 +220,7 @@ export class RedBlackTree {
             nodeToBeReplaced.key = node.key;
             nodeToBeReplaced.data = node.data;
 
-            const parent = node.parent;
+            parent = node.parent;
             if (parent === nodeToBeReplaced) {
                 parent.setRight(node.right);
             } else {
@@ -228,7 +229,7 @@ export class RedBlackTree {
         }
 
         // fix
-        this.#fixDeletionViolations(nodeToBeReplaced, node);
+        this.#fixDeletionViolations(parent, node.isRed);
         return true;
     }
 }
