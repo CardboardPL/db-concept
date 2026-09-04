@@ -114,6 +114,11 @@ export class RedBlackTree {
         // write logic for this
     }
 
+    /**
+     * Find a specific node given a key
+     * @param {any} key - identifier for the target node
+     * @returns 
+     */
     #findNode(key) {
         let curr = this.#root;
         while (curr) {
