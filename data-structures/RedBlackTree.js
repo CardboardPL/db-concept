@@ -33,7 +33,11 @@ export class RedBlackTree {
         pivot.setLeft(initialRoot);
     }
 
-    // Perform a right rotation
+    /**
+     * Performs a right rotation
+     * @param {RedBlackTreeNode} initialRoot - initial root of the subtree
+     * @param {RedBlackTreeNode} pivot  - the new root
+     */
     #rotateRight(initialRoot, pivot) {
         const parent = initialRoot.parent;
 
@@ -49,6 +53,11 @@ export class RedBlackTree {
         pivot.setRight(initialRoot);
     }
 
+    /**
+     * Performs a left rotation
+     * @param {RedBlackTreeNode} initialRoot - initial root of the subtree
+     * @param {RedBlackTreeNode} pivot  - the new root
+     */
     #handleRotations(curr, parent, grandParent) {
         grandParent.isRed = true;
         let isLeftRotation = false;
