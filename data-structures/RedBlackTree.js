@@ -119,6 +119,12 @@ export class RedBlackTree {
         }
     }
 
+    /**
+     * fixes deletion violations from the deleted node
+     * @param {RedBlackTreeNode} parent - parent of the deleted node 
+     * @param {boolean} isLeftChild - determines whether the deleted node is the left child of its parent or not
+     * @param {boolean} isRed - determines whether the deleted node is red or black
+     */
     #fixDeletionViolations(parent, isLeftChild, isRed) {
         // write logic for this
     }
