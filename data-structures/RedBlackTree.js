@@ -212,53 +212,53 @@ export class RedBlackTree {
      * @returns {Boolean} a boolean representing if the node was deleted or not
      */
     delete(key) {
-        const nodeToBeReplaced = this.#findNode(key);
-        if (!nodeToBeReplaced) return false;
+        const targetNode = this.#findNode(key);
+        if (!targetNode) return false;
         
-        let node = nodeToBeReplaced.right;
-        while (node) {
-            const left = node.left;
+        let successor = targetNode.right;
+        while (successor) {
+            const left = successor.left;
             if (left) {
-                node = left;
+                successor = left;
             } else {
                 break;
             }
         }
 
-        let parent;
-        let isLeftChild = false;
-        if (!node) {
-            node = nodeToBeReplaced;
+        let successorParent;
+        let successorWasLeftChild = false;
+        if (!successor) {
+            successor = targetNode;
 
-            parent = node.parent;
-            if (!parent) this.#root = node.left;
-            else if (parent.left === node) {
-                isLeftChild = true;
-                parent.setLeft(node.left);
+            successorParent = successor.parent;
+            if (!successorParent) this.#root = successor.left;
+            else if (successorParent.left === successor) {
+                successorWasLeftChild = true;
+                successorParent.setLeft(successor.left);
             } else {
-                parent.setRight(node.left);
+                successorParent.setRight(successor.left);
             }
         } else {
-            parent = node.parent;
-            node.setLeft(nodeToBeReplaced.left);
-            if (parent !== nodeToBeReplaced) {
-                node.setRight(nodeToBeReplaced.right);   
+            successorParent = successor.parent;
+            successor.setLeft(targetNode.left);
+            if (successorParent !== targetNode) {
+                successor.setRight(targetNode.right);   
             } else {
-                isLeftChild = true;
+                successorWasLeftChild = true;
             }
-            node.isRed = nodeToBeReplaced.isRed;
+            successor.isRed = targetNode.isRed;
 
-            if (!nodeToBeReplaced.parent) {
-                this.#root = node;
-            } else if (nodeToBeReplaced.parent.left === nodeToBeReplaced) {
-                nodeToBeReplaced.parent.setLeft(node);
+            if (!targetNode.parent) {
+                this.#root = successor;
+            } else if (targetNode.parent.left === targetNode) {
+                targetNode.parent.setLeft(successor);
             } else {
-                nodeToBeReplaced.parent.setRight(node);
+                targetNode.parent.setRight(successor);
             }
         }
 
         // fix violations
-        this.#fixDeletionViolations(parent, isLeftChild, node.isRed);
+        this.#fixDeletionViolations(successorParent, successorWasLeftChild, successor.isRed);
         return true;
     }
 }
