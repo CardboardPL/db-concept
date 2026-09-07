@@ -239,19 +239,25 @@ export class RedBlackTree {
                 parent.setRight(node.left);
             }
         } else {
-            nodeToBeReplaced.key = node.key;
-            nodeToBeReplaced.data = node.data;
-
             parent = node.parent;
-            if (parent === nodeToBeReplaced) {
-                parent.setRight(node.right);
+            node.setLeft(nodeToBeReplaced.left);
+            if (parent !== nodeToBeReplaced) {
+                node.setRight(nodeToBeReplaced.right);   
             } else {
                 isLeftChild = true;
-                parent.setLeft(node.right);
+            }
+            node.isRed = nodeToBeReplaced.isRed;
+
+            if (!nodeToBeReplaced.parent) {
+                this.#root = node;
+            } else if (nodeToBeReplaced.parent.left === nodeToBeReplaced) {
+                nodeToBeReplaced.parent.setLeft(node);
+            } else {
+                nodeToBeReplaced.parent.setRight(node);
             }
         }
 
-        // fix
+        // fix violations
         this.#fixDeletionViolations(parent, isLeftChild, node.isRed);
         return true;
     }
