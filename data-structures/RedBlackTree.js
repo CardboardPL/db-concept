@@ -225,6 +225,7 @@ export class RedBlackTree {
             }
         }
 
+        const isSuccessorRed = successor.isRed;
         let successorParent;
         let successorWasLeftChild = false;
         if (!successor) {
@@ -258,7 +259,7 @@ export class RedBlackTree {
         }
 
         // fix violations
-        this.#fixDeletionViolations(successorParent, successorWasLeftChild, successor.isRed);
+        this.#fixDeletionViolations(successorParent, successorWasLeftChild, isSuccessorRed);
         return true;
     }
 }
