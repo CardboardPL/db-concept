@@ -126,7 +126,9 @@ export class RedBlackTree {
      * @param {boolean} isRed - determines whether the deleted node is red or black
      */
     #fixDeletionViolations(successorParent, successorWasLeftChild, isSuccessorRed) {
-        // write logic for this
+        if (isSuccessorRed) return;
+
+        // add rest of the code
     }
 
     /**
