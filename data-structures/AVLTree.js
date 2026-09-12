@@ -217,16 +217,12 @@ export class AVLTree {
         }
 
         // Find the in-order successor
-        const toOverwrite = curr;
+        const targetNode = curr;
         curr = curr.right;
         while (curr) {
             if (curr.left) {
                 curr = curr.left
             } else {
-                // overwrite the node to be overwritten to have the in-order successor's data
-                toOverwrite.data = curr.data;
-                toOverwrite.key = curr.key;
-                
                 // unlink the leaf node where the in-order successor lived
                 const parent = curr.parent;
                 if (parent.left === curr) {
@@ -234,6 +230,19 @@ export class AVLTree {
                 } else {
                     parent.setRight(curr.right);
                 }
+
+                // place successor node in target node's place
+                const targetParent = targetNode.parent;
+                if (!targetParent) {
+                    this.#root = curr;
+                } else if (targetParent.left === targetNode) {
+                    targetParent.setLeft(curr);
+                } else {
+                    targetParent.setRight(curr);
+                }
+
+                curr.setLeft(targetNode.left);
+                curr.setRight(targetNode.right);
 
                 // rebalance tree
                 this.#balanceTree(parent);
