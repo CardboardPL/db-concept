@@ -179,6 +179,11 @@ export class AVLTree {
         return false;
     }
 
+    /**
+     * deletes a node from the tree
+     * @param {any} key - identifier for the target node
+     * @returns a boolean indicating if the operation was successful or not
+     */
     delete(key) {
         // find node to delete
         let curr = this.#root;
