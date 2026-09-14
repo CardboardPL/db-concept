@@ -165,6 +165,11 @@ export class AVLTree {
         return true;
     }
 
+    /**
+     * retrieves the data of a node in the tree
+     * @param {any} key - identifier for the target node
+     * @returns null if the node wasn't found or the data in it if found
+     */
     getData(key) {
         const node = this.#findNode(key);
         return node ? node.data : null;
