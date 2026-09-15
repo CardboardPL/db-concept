@@ -129,6 +129,12 @@ export class AVLTree {
         return null;
     }
 
+    /**
+     * inserts a node to the tree
+     * @param {*} key - identifier for the node
+     * @param {*} data - data of the node
+     * @returns 
+     */
     insert(key, data) {
         if (key == null) return false;
         data = data == null ? key : data;
