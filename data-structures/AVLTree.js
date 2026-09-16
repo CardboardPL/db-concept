@@ -181,6 +181,12 @@ export class AVLTree {
         return node ? node.data : null;
     }
 
+    /**
+     * updates the stored data of the stored node
+     * @param {any} key - identifier for the target node
+     * @param {any} newData - data to replace the already stored data
+     * @returns boolean describing if the operation was successful or not
+     */
     updateData(key, newData) {
         const node = this.#findNode(key);
         if (node) {
